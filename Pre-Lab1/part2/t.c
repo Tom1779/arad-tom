@@ -121,7 +121,7 @@ int C(int x, int y)
     for(int i = 0; i < 128; i++)
     {
         printf("%3d. [%p] %8x\n", i, p, *p);
-        p--;
+        p++;
     }
 
 

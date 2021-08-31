@@ -1,0 +1,153 @@
+enter main
+&argc=0xffadda00 argv=0xffadda94 env=0xffaddaa8
+&a=0xffadd9bc &b=0xffadd9c0 &c=0xffadd9c4
+argc = 4
+argv[0] = ./a.out
+argv[1] = one
+argv[2] = two
+argv[3] = three
+enter A
+&x=0xffadd990 &y=0xffadd994
+&d=0xffadd970 &e=0xffadd974 &f=0xffadd978
+enter B
+&x=0xffadd960 &y=0xffadd964
+&g=0xffadd940 &h=0xffadd944 &i=0xffadd948
+enter C
+&x=0xffadd930 &y=0xffadd934
+&u=0xffadd904 &v=0xffadd908 &w=0xffadd90c &i=0xffadd910 &p=0xffadd914
+FP=0xffadd928
+FP: 0xffadd928
+FP: 0xffadd958
+FP: 0xffadd988
+FP: 0xffadd9e8
+  0. [0xffadd928] ffadd958
+  1. [0xffadd924] 56590fd0
+  2. [0xffadd920] ffadda00
+  3. [0xffadd91c] cecd5500
+  4. [0xffadd918]        4
+  5. [0xffadd914] ffadd914
+  6. [0xffadd910]        d
+  7. [0xffadd90c]        c
+  8. [0xffadd908]        b
+  9. [0xffadd904]        a
+ 10. [0xffadd900] ffadda00
+ 11. [0xffadd8fc] ffadda00
+ 12. [0xffadd8f8] ffadd8fc
+ 13. [0xffadd8f4]        c
+ 14. [0xffadd8f0] 5658f0ea
+ 15. [0xffadd8ec] 5658e580
+ 16. [0xffadd8e8] f7d6fde9
+ 17. [0xffadd8e4] ffadd904
+ 18. [0xffadd8e0] 5658f0bc
+ 19. [0xffadd8dc]        0
+ 20. [0xffadd8d8] ffadd8f4
+ 21. [0xffadd8d4] 5658f0ea
+ 22. [0xffadd8d0] f7f03d20
+ 23. [0xffadd8cc] f7d6fe09
+ 24. [0xffadd8c8] ffadd928
+ 25. [0xffadd8c4] f7f03000
+ 26. [0xffadd8c0] ffadda00
+ 27. [0xffadd8bc] 56590fd0
+ 28. [0xffadd8b8] ffadd928
+ 29. [0xffadd8b4] f7f03000
+ 30. [0xffadd8b0] ffadda00
+ 31. [0xffadd8ac] cecd5500
+ 32. [0xffadd8a8] 30303535
+ 33. [0xffadd8a4] 30333033
+ 34. [0xffadd8a0] f7f03d20
+ 35. [0xffadd89c] cecd5500
+ 36. [0xffadd898] 34313964
+ 37. [0xffadd894] 64616666
+ 38. [0xffadd890]        0
+ 39. [0xffadd88c]        0
+ 40. [0xffadd888]        0
+ 41. [0xffadd884]    66ac8
+ 42. [0xffadd880] 19d26093
+ 43. [0xffadd87c] 612ddd63
+ 44. [0xffadd878]        7
+ 45. [0xffadd874] 5658f0b4
+ 46. [0xffadd870] 56a122e8
+ 47. [0xffadd86c] f7d984ed
+ 48. [0xffadd868]        0
+ 49. [0xffadd864]        0
+ 50. [0xffadd860]     1000
+ 51. [0xffadd85c]        0
+ 52. [0xffadd858]        0
+ 53. [0xffadd854]        0
+ 54. [0xffadd850]        0
+ 55. [0xffadd84c]        0
+ 56. [0xffadd848]      3e8
+ 57. [0xffadd844]      3e8
+ 58. [0xffadd840]        1
+ 59. [0xffadd83c]     81b4
+ 60. [0xffadd838]    66ac8
+ 61. [0xffadd834]        0
+ 62. [0xffadd830]        0
+ 63. [0xffadd82c]      805
+ 64. [0xffadd828]        0
+ 65. [0xffadd824]        0
+ 66. [0xffadd820]        0
+ 67. [0xffadd81c]        1
+ 68. [0xffadd818] 56a131a0
+ 69. [0xffadd814] 56a121a0
+ 70. [0xffadd810] f7f03d20
+ 71. [0xffadd80c] f7d8aad2
+ 72. [0xffadd808] f7f03d20
+ 73. [0xffadd804] f7f03000
+ 74. [0xffadd800] f7d9a3db
+ 75. [0xffadd7fc] f7f03000
+ 76. [0xffadd7f8] ffadd82c
+ 77. [0xffadd7f4]        1
+ 78. [0xffadd7f0]        3
+ 79. [0xffadd7ec] f7d97e69
+ 80. [0xffadd7e8] f7f045e0
+ 81. [0xffadd7e4] f7d8aabb
+ 82. [0xffadd7e0]     1000
+ 83. [0xffadd7dc] f7da22fa
+ 84. [0xffadd7d8] f7f03000
+ 85. [0xffadd7d4] f7f03000
+ 86. [0xffadd7d0]     1000
+ 87. [0xffadd7cc] f7f03000
+ 88. [0xffadd7c8]     1000
+ 89. [0xffadd7c4]     1000
+ 90. [0xffadd7c0] f7d9e037
+ 91. [0xffadd7bc] f7da223e
+ 92. [0xffadd7b8] f7f03000
+ 93. [0xffadd7b4] ffffffcc
+ 94. [0xffadd7b0]     1000
+ 95. [0xffadd7ac]      100
+ 96. [0xffadd7a8]        0
+ 97. [0xffadd7a4] f7f1b110
+ 98. [0xffadd7a0] bb3fadaa
+ 99. [0xffadd79c]        1
+100. [0xffadd798]        8
+101. [0xffadd794]       40
+102. [0xffadd790]      102
+103. [0xffadd78c]       7c
+104. [0xffadd788]       77
+105. [0xffadd784] f7f03000
+106. [0xffadd780] ffadd7a8
+107. [0xffadd77c]       6f
+108. [0xffadd778]        0
+109. [0xffadd774]        6
+110. [0xffadd770]       1a
+111. [0xffadd76c]       63
+112. [0xffadd768]       77
+113. [0xffadd764] f7f03000
+114. [0xffadd760]       71
+115. [0xffadd75c]        0
+116. [0xffadd758]       63
+117. [0xffadd754]        0
+118. [0xffadd750]      200
+119. [0xffadd74c]       5b
+120. [0xffadd748]      100
+121. [0xffadd744] f7d2d76c
+122. [0xffadd740]        0
+123. [0xffadd73c]     1010
+124. [0xffadd738] f7f03778
+125. [0xffadd734] ffffffcc
+126. [0xffadd730]     1000
+127. [0xffadd72c] f7f03740
+exit B
+exit A
+exit main

@@ -70,7 +70,7 @@ int main()
         p = (struct partition *)(&buf[0x1be]); // p->P5
         printf("1st entry start_sector: %8d, nr_sectors: %8d\n", p->start_sector, p->nr_sectors);
         printf("P %2d: start_sector: %8d, nr_sectors: %8d, end: %8d, sys_type: %2x\n", i, localMBR + p->start_sector, p->nr_sectors,
-        localMBR + p->start_sector + p->nr_sectors, p->sys_type);
+        localMBR + p->start_sector + p->nr_sectors - 1, p->sys_type);
         if (p[1].start_sector == 0)
         {
             break;

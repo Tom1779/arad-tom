@@ -23,16 +23,16 @@ int printu(u32 x)
 }
 
 // 1-1
-void prints(char *s)
+void prints(char *s) //print string
 {
-    if (!s)
+    if (!s) // exit if no string
     {
         return;
     }
 
-    while (*s != '\0')
+    while (*s != '\0') //iterating until end of string
     {
-        putchar(*s);
+        putchar(*s); //printing char
         s++;
     }
 }
@@ -40,28 +40,28 @@ void prints(char *s)
 // 1-2
 int printd(int x)
 {
-    BASE = 10;
-    if (x < 0)
+    BASE = 10; // base 10 for numbers
+    if (x < 0) //printing a minus if x is negative
     {
         putchar('-');
         x = -x;
     }
-    printu(x);
+    printu(x); //print int
 }
 
 int printx(u32 x)
 {
-    BASE = 16;
+    BASE = 16; // base 16 for hex
     putchar('0');
     putchar('x');
-    printu(x);
+    printu(x); // print hex number
 }
 
 int printo(u32 x)
 {
-    BASE = 8;
+    BASE = 8; // base 8 for octal
     putchar('0');
-    printu(x);
+    printu(x); //print octal
 }
 
 // 1-3
@@ -72,13 +72,13 @@ void myprintf(char *fmt, ...)
 
     va_list valist;
 
-    va_start(valist, fmt);
+    va_start(valist, fmt); // allocating space foran amount of arguements equal to string length
 
-    if (!fmt)
+    if (!fmt) // exit if no string
     {
         return;
     }
-    while (*fmt != '\0')
+    while (*fmt != '\0') //iterating while not at the end of the string
     {
         if (!state)
         {

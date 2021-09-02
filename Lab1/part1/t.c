@@ -20,7 +20,6 @@ int rpu(u32 x)
 int printu(u32 x)
 {
     (x == 0) ? putchar('0') : rpu(x);
-    putchar(' ');
 }
 
 // 1-1
@@ -101,7 +100,7 @@ void myprintf(char *fmt, ...)
             }
             else if (*fmt == 's')
             {
-                char* val = va_arg(valist, char*);
+                char *val = va_arg(valist, char *);
                 prints(val);
             }
             else if (*fmt == 'u')
@@ -133,13 +132,13 @@ void myprintf(char *fmt, ...)
         }
         fmt++;
     }
-    if(state == 1)
+    if (state == 1)
     {
         putchar('%');
     }
 }
 
-int main(int argc, char *argv[ ], char *env[ ])
+int main(int argc, char *argv[], char *env[])
 {
     prints("Tom");
     putchar('\n');
@@ -151,9 +150,21 @@ int main(int argc, char *argv[ ], char *env[ ])
     putchar('\n');
     printo(8);
     putchar('\n');
-    myprintf("cha=%c string=%s      dec=%d hex=%x oct=%o neg=%d\n", 
-	       'A', "this is a test", 100,    100,   100,  -100);
+    myprintf("cha=%c string=%s      dec=%d hex=%x oct=%o neg=%d\n",
+             'A', "this is a test", 100, 100, 100, -100);
     putchar('\n');
+    myprintf("argc = %d\n", argc);
+    for (int i = 0; i < argc; i++)
+    {
+        myprintf("argv[%d] = %s\n", i, argv[i]);
+    }
+    int i = 0;
+    while (*env != NULL)
+    {
+        myprintf("env[%d]: %s\n", i, *env);
+        env++;
+        i++;
+    }
 
     return 0;
 }

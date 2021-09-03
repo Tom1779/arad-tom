@@ -72,7 +72,7 @@ void myprintf(char *fmt, ...)
 
     va_list valist;
 
-    va_start(valist, fmt); // allocating space foran amount of arguements equal to string length
+    va_start(valist, fmt); // creating list for arguments
 
     if (!fmt) // exit if no string
     {

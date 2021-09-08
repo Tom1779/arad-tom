@@ -1,3 +1,7 @@
+/* Tom Arad
+    Cpts_360
+*/
+
 #include <stdio.h>
 #include <stdarg.h>
 

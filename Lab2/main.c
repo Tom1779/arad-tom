@@ -414,9 +414,17 @@ int rm(char *pathname) // new
     return 0;
 }
 
-int ls(char *name)
+int ls(char *name) // doesnt work with cwd
 {
-    NODE *p = path2node(name)->child; // new
+    NODE* p;
+    if (!name[0])
+    {
+        p = path2node(cwd->name)->child;
+    }
+    else
+    {
+        p = path2node(name)->child; // new
+    }
     printf("directory contents = ");
     while (p)
     {

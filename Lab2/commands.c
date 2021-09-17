@@ -60,6 +60,7 @@ int mkdir(char *name)
     printf("--------------------------------------\n");
 
     free(parent_path);
+    free(normalized_path);
 
     return 0;
 }
@@ -113,6 +114,7 @@ int create(char *name) // new
     printf("--------------------------------------\n");
 
     free(parent_path);
+    free(normalized_path);
 
     return 0;
 }

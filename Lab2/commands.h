@@ -2,7 +2,7 @@
 
 #include "tree.h"
 
-int mkdir(char *name);
+int mkdir(char *name); // creates directory with given path name, reuirements: path is valid, does not already exist
 
 int create(char *name); // new
 

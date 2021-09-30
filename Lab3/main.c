@@ -6,16 +6,16 @@
 #include <errno.h>
 #include <unistd.h>
 
-char *arg[64];   // token string pointers
-int nargs;       // number of token strings
+char *arg[64]; // token string pointers
+int nargs;     // number of token strings
 
 char dpath[128]; // hold dir strings in PATH
 
 char path[512]; // number of dirs
 
 int tokenize(char *line, int *narg, char *args[64]) // YOU have done this in LAB2
-{                                                       // YOU better know how to apply it from now on
-    char* tokens;
+{                                                   // YOU better know how to apply it from now on
+    char *tokens;
     int size = strlen(line) + 1;
     tokens = malloc(size);
     memset(tokens, 0, size);
@@ -50,7 +50,7 @@ void parent_proc(int *pid, int *status)
 {
     printf("sh %d forked a child sh %d\n", getpid(), *pid);
     printf("sh %d wait for child sh %d to terminate\n", getpid(), *pid);
-    *pid = wait(status);
+    waitpid(*pid, status);
     printf("ZOMBIE child=%d exitStatus=%x\n", *pid, *status);
     printf("main sh %d repeat loop\n", getpid());
 }
@@ -144,9 +144,10 @@ void child_proc(int ndir, char *dirs[], char *line, char *cmd, char *env[])
     int is_append_redir = 0;
     int is_pipe = 0;
     int child_pid, child_status;
-    char *line_head, *line_tail;
-    char* line_copy = malloc(128);
-    char** aarg;
+    char *line_head = malloc(128);
+    char *line_tail = malloc (128);
+    char *line_copy = malloc(128);
+    char **aarg;
     printf("child sh %d running\n", getpid());
 
     for (int i = 0; i < nargs; i++)
@@ -155,13 +156,13 @@ void child_proc(int ndir, char *dirs[], char *line, char *cmd, char *env[])
         if (!strcmp(arg[i], "|"))
         {
             is_pipe = 1;
-            strncpy(line_head, line, 128);
-            line_head = strtok(line_head, "|");
-            line_tail = strtok(NULL, "|");
         }
     }
     if (is_pipe)
     {
+        strncpy(line_head, line, 128);
+        line_head = strtok(line_head, "|");
+        line_tail = strtok(NULL, "|");
         char *child_arg[64];
         int child_narg;
         int pd[2];
@@ -170,20 +171,20 @@ void child_proc(int ndir, char *dirs[], char *line, char *cmd, char *env[])
         if (child_pid) // writer
         {
             tokenize(line_head, &child_narg, child_arg);
-            strncpy(line_copy, line_head, 128);
             close(pd[0]);
             dup2(pd[1], STDOUT_FILENO);
             close(pd[1]);
             get_command_line(ndir, dirs, line_head, child_arg[0]);
+            strncpy(line_copy, line_head, 128);
         }
         else // reader
         {
             tokenize(line_tail, &child_narg, child_arg);
-            strncpy(line_copy, line_tail, 128);
             close(pd[1]);
             dup2(pd[0], STDIN_FILENO);
             close(pd[0]);
             get_command_line(ndir, dirs, line_tail, child_arg[0]);
+            strncpy(line_copy, line_tail, 128);
         }
         aarg = child_arg;
     }

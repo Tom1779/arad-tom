@@ -14,8 +14,8 @@ char dpath[128]; // hold dir strings in PATH
 
 char path[512]; // number of dirs
 
-int tokenize(char *pathname) // YOU have done this in LAB2
-{                            // YOU better know how to apply it from now on
+int tokenize(char *pathname, int *narg, char *args[64]) // YOU have done this in LAB2
+{                                                       // YOU better know how to apply it from now on
     char *s;
     strcpy(gpath, pathname); // copy into global gpath[]
     s = strtok(gpath, " ");
@@ -90,7 +90,6 @@ void set_out_redir()
                 int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
                 dup2(fd, STDOUT_FILENO);
                 close(fd);
-                printf("line: %d\n", __LINE__);
                 break;
             }
         }
@@ -140,13 +139,50 @@ void child_proc(int ndir, char *dirs[], char *line, char *cmd, char *env[])
     int is_out_redir = 0;
     int is_in_redir = 0;
     int is_append_redir = 0;
+    int is_pipe = 0;
+    int child_pid, child_status;
+    char *line_head, *line_tail;
     printf("child sh %d running\n", getpid());
+
+    for (int i = 0; i < nargs; i++)
+    { // show token strings
+        printf("arg[%d] = %s\n", i, arg[i]);
+        if (!strcmp(arg[i], "|"))
+        {
+            is_pipe = 1;
+            strncpy(line_head, line, 128);
+            line_head = strtok(line_head, "|");
+            line_tail = strtok(NULL, "|");
+        }
+    }
+    if (is_pipe)
+    {
+        char *child_arg[64];
+        int child_narg;
+        int pd[2];
+        pipe(pd);
+        child_pid = fork();
+        if (child_pid) // writer
+        {
+            tokenize(line_head, &child_narg, child_arg);
+            close(pd[0]);
+            dup2(pd[1], STDOUT_FILENO);
+            close(pd[1]);
+        }
+        else // reader
+        {
+            tokenize(line_tail, &child_narg, child_arg);
+            close(pd[1]);
+            dup2(pd[0], STDIN_FILENO);
+            close(pd[0]);
+        }
+    }
 
     get_command_line(ndir, dirs, line, cmd);
 
     set_out_redir();
     set_in_redir();
-    
+
     int r = execve(line, arg, env);
 
     printf("execve failed r = %d\n", r);
@@ -158,7 +194,6 @@ int main(int argc, char *argv[], char *env[])
     int pid, status;
     char *cmd;
     char line[128];
-    char *line_head;
     char *dirs[64] = {NULL}; // dir string pointers
     int ndir = 0;
 
@@ -187,12 +222,7 @@ int main(int argc, char *argv[], char *env[])
         if (line[0] == 0)
             continue;
 
-        tokenize(line);
-
-        for (int i = 0; i < nargs; i++)
-        { // show token strings
-            printf("arg[%d] = %s\n", i, arg[i]);
-        }
+        tokenize(line, &nargs, arg);
 
         cmd = arg[0]; // line = arg0 arg1 arg2 ...
 

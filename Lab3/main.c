@@ -6,7 +6,6 @@
 #include <errno.h>
 #include <unistd.h>
 
-char gpath[128]; // hold token strings
 char *arg[64];   // token string pointers
 int nargs;       // number of token strings
 
@@ -14,18 +13,22 @@ char dpath[128]; // hold dir strings in PATH
 
 char path[512]; // number of dirs
 
-int tokenize(char *pathname, int *narg, char *args[64]) // YOU have done this in LAB2
+int tokenize(char *line, int *narg, char *args[64]) // YOU have done this in LAB2
 {                                                       // YOU better know how to apply it from now on
+    char* tokens;
+    int size = strlen(line) + 1;
+    tokens = malloc(size);
+    memset(tokens, 0, size);
     char *s;
-    strcpy(gpath, pathname); // copy into global gpath[]
-    s = strtok(gpath, " ");
-    nargs = 0;
+    strcpy(tokens, line);
+    s = strtok(tokens, " ");
+    *narg = 0;
     while (s)
     {
-        arg[nargs++] = s; // token string pointers
+        args[(*narg)++] = s; // token string pointers
         s = strtok(0, " ");
     }
-    arg[nargs] = 0; // arg[n] = NULL pointer
+    args[*narg] = 0; // arg[n] = NULL pointer
 }
 
 void parse_path(char *pathname, char *dir[], int *ndir)
@@ -142,6 +145,8 @@ void child_proc(int ndir, char *dirs[], char *line, char *cmd, char *env[])
     int is_pipe = 0;
     int child_pid, child_status;
     char *line_head, *line_tail;
+    char* line_copy = malloc(128);
+    char** aarg;
     printf("child sh %d running\n", getpid());
 
     for (int i = 0; i < nargs; i++)
@@ -165,25 +170,33 @@ void child_proc(int ndir, char *dirs[], char *line, char *cmd, char *env[])
         if (child_pid) // writer
         {
             tokenize(line_head, &child_narg, child_arg);
+            strncpy(line_copy, line_head, 128);
             close(pd[0]);
             dup2(pd[1], STDOUT_FILENO);
             close(pd[1]);
+            get_command_line(ndir, dirs, line_head, child_arg[0]);
         }
         else // reader
         {
             tokenize(line_tail, &child_narg, child_arg);
+            strncpy(line_copy, line_tail, 128);
             close(pd[1]);
             dup2(pd[0], STDIN_FILENO);
             close(pd[0]);
+            get_command_line(ndir, dirs, line_tail, child_arg[0]);
         }
+        aarg = child_arg;
+    }
+    else
+    {
+        get_command_line(ndir, dirs, line, cmd);
+        set_out_redir();
+        set_in_redir();
+        strncpy(line_copy, line, 128);
+        aarg = arg;
     }
 
-    get_command_line(ndir, dirs, line, cmd);
-
-    set_out_redir();
-    set_in_redir();
-
-    int r = execve(line, arg, env);
+    int r = execve(line_copy, aarg, env);
 
     printf("execve failed r = %d\n", r);
     exit(1);

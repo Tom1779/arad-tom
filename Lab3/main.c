@@ -43,15 +43,122 @@ void parse_path(char *pathname, char *dir[], int *ndir)
     }
 }
 
-int main(int argc, char *argv[], char *env[])
+void parent_proc(int *pid, int *status)
 {
-    int pid, status;
+    printf("sh %d forked a child sh %d\n", getpid(), *pid);
+    printf("sh %d wait for child sh %d to terminate\n", getpid(), *pid);
+    *pid = wait(status);
+    printf("ZOMBIE child=%d exitStatus=%x\n", *pid, *status);
+    printf("main sh %d repeat loop\n", getpid());
+}
+
+void get_command_line(int ndir, char *dirs[], char *line, char *cmd)
+{
     int is_file = 0;
+    for (int i = 0; i < ndir; i++)
+    {
+        strncpy(line, dirs[i], 128);
+        strcat(line, "/");
+        strcat(line, cmd);
+        printf("line = %s\n", line);
+        if (fopen(line, "r"))
+        {
+            is_file = 1;
+            break;
+        }
+    }
+    if (!is_file)
+    {
+        printf("invalid command %s\n", arg[0]);
+        exit(1);
+    }
+}
+
+void set_out_redir()
+{
+    for (int i = 0; i < nargs; i++)
+    {
+        if (!strcmp(arg[i], ">"))
+        {
+            if (i + 1 < nargs)
+            {
+                char filename[128];
+                strncpy(filename, arg[i + 1], 128);
+                printf("redirecting output to %s\n", filename);
+                //is_out_redir = 1;
+                arg[i] = 0;
+                int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                dup2(fd, STDOUT_FILENO);
+                close(fd);
+                printf("line: %d\n", __LINE__);
+                break;
+            }
+        }
+        if (!strcmp(arg[i], ">>"))
+        {
+            if (i + 1 < nargs)
+            {
+                char filename[128];
+                strncpy(filename, arg[i + 1], 128);
+                //is_append_redir = 1;
+                arg[i] = 0;
+                close(1);
+                open(filename, O_WRONLY | O_APPEND, 0644);
+                break;
+            }
+        }
+    }
+}
+
+void set_in_redir()
+{
+    for (int i = 0; i < nargs; i++)
+    {
+        if (!arg[i])
+        {
+            continue;
+        }
+        if (!strcmp(arg[i], "<"))
+        {
+            if (i + 1 < nargs)
+            {
+                char filename[128];
+                strncpy(filename, arg[i + 1], 128);
+                //is_in_redir = 1;
+                arg[i] = 0;
+                close(0);
+                open(filename, O_RDONLY);
+                printf("line: %d\n", __LINE__);
+                break;
+            }
+        }
+    }
+}
+
+void child_proc(int ndir, char *dirs[], char *line, char *cmd, char *env[])
+{
     int is_out_redir = 0;
     int is_in_redir = 0;
     int is_append_redir = 0;
+    printf("child sh %d running\n", getpid());
+
+    get_command_line(ndir, dirs, line, cmd);
+
+    set_out_redir();
+    set_in_redir();
+    
+    int r = execve(line, arg, env);
+
+    printf("execve failed r = %d\n", r);
+    exit(1);
+}
+
+int main(int argc, char *argv[], char *env[])
+{
+    int pid, status;
     char *cmd;
     char line[128];
+    char *line_head;
     char *dirs[64] = {NULL}; // dir string pointers
     int ndir = 0;
 
@@ -86,7 +193,6 @@ int main(int argc, char *argv[], char *env[])
         { // show token strings
             printf("arg[%d] = %s\n", i, arg[i]);
         }
-        // getchar();
 
         cmd = arg[0]; // line = arg0 arg1 arg2 ...
 
@@ -102,93 +208,11 @@ int main(int argc, char *argv[], char *env[])
 
         if (pid)
         {
-            printf("sh %d forked a child sh %d\n", getpid(), pid);
-            printf("sh %d wait for child sh %d to terminate\n", getpid(), pid);
-            pid = wait(&status);
-            printf("ZOMBIE child=%d exitStatus=%x\n", pid, status);
-            printf("main sh %d repeat loop\n", getpid());
+            parent_proc(&pid, &status);
         }
         else
         {
-            printf("child sh %d running\n", getpid());
-
-            for (int i = 0; i < ndir; i++)
-            {
-                strncpy(line, dirs[i], 128);
-                strcat(line, "/");
-                strcat(line, cmd);
-                printf("line = %s\n", line);
-                if (fopen(line, "r"))
-                {
-                    is_file = 1;
-                    break;
-                }
-            }
-            if (!is_file)
-            {
-                printf("invalid command %s\n", arg[0]);
-                exit(1);
-            }
-
-            for (int i = 0; i < nargs; i++)
-            {
-                if (!strcmp(arg[i], ">"))
-                {
-                    if (i + 1 < nargs)
-                    {
-                        char filename[128];
-                        strncpy(filename, arg[i + 1], 128);
-                        printf("redirecting output to %s\n", filename);
-                        is_out_redir = 1;
-                        arg[i] = 0;
-                        int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-                        dup2(fd, STDOUT_FILENO);
-                        close(fd);
-                        printf("line: %d\n", __LINE__);
-                        break;
-                    }
-                }
-                if (!strcmp(arg[i], ">>"))
-                {
-                    if (i + 1 < nargs)
-                    {
-                        char filename[128];
-                        strncpy(filename, arg[i + 1], 128);
-                        is_append_redir = 1;
-                        arg[i] = 0;
-                        close(1);
-                        open(filename, O_WRONLY | O_APPEND, 0644);
-                        break;
-                    }
-                }
-            }
-            printf("line: %d\n", __LINE__);
-            for (int i = 0; i < nargs; i++)
-            {
-                if (!arg[i])
-                {
-                    continue;
-                }
-                if (!strcmp(arg[i], "<"))
-                {
-                    if (i + 1 < nargs)
-                    {
-                        char filename[128];
-                        strncpy(filename, arg[i + 1], 128);
-                        is_in_redir = 1;
-                        arg[i] = 0;
-                        close(0);
-                        open(filename, O_RDONLY);
-                        printf("line: %d\n", __LINE__);
-                        break;
-                    }
-                }
-            }
-            printf("line: %d\n", __LINE__);
-            int r = execve(line, arg, env);
-
-            printf("execve failed r = %d\n", r);
-            exit(1);
+            child_proc(ndir, dirs, line, cmd, env);
         }
     }
 }

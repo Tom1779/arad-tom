@@ -1,1 +1,6 @@
 *.out
+*.gitignore
+mtx
+*.txt
+*.bin
+main

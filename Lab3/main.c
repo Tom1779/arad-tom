@@ -61,7 +61,7 @@ void get_command_line(int ndir, char *dirs[], char *line, char *cmd)
         strncpy(line, dirs[i], 128);
         strcat(line, "/");
         strcat(line, cmd);
-        printf("line = %s\n", line);
+        fprintf(stderr, "line = %s\n", line);
         if (fopen(line, "r"))
         {
             is_file = 1;
@@ -70,7 +70,7 @@ void get_command_line(int ndir, char *dirs[], char *line, char *cmd)
     }
     if (!is_file)
     {
-        printf("invalid command %s\n", arg[0]);
+        fprintf(stderr, "invalid command %s\n", arg[0]);
         exit(1);
     }
 }
@@ -141,6 +141,7 @@ void child_proc(int ndir, char *dirs[], char *line, char *cmd, char *env[])
     int is_in_redir = 0;
     int is_append_redir = 0;
     int is_pipe = 0;
+    int writer_pid, reader_pid;
     int child_pid, child_status;
     char *line_head = malloc(128);
     char *line_tail = malloc(128);
@@ -163,28 +164,53 @@ void child_proc(int ndir, char *dirs[], char *line, char *cmd, char *env[])
         line_tail = strtok(NULL, "|");
         char *child_arg[64];
         int child_narg;
+        int status;
         int pd[2];
         pipe(pd);
-        child_pid = fork();
-        if (child_pid) // writer
+        //child_pid = fork();
+        writer_pid = fork();
+        if (!writer_pid) // writer
         {
-            tokenize(line_head, &child_narg, child_arg);
+            fprintf(stderr, "starting writer process, pid =  %d\n", getpid());
+            int writer_narg;
+            char *writer_arg[64];
+            tokenize(line_head, &writer_narg, writer_arg);
             close(pd[0]);
             dup2(pd[1], STDOUT_FILENO);
             close(pd[1]);
-            get_command_line(ndir, dirs, line_head, child_arg[0]);
-            strncpy(line_copy, line_head, 128);
+            get_command_line(ndir, dirs, line_head, writer_arg[0]);
+            int r = execve(line_head, writer_arg, env);
+
+            printf("writer: execve failed r = %d\n", r);
+            exit(1);
         }
-        else // reader
+        fprintf(stderr, "waiting for writer pid = %d\n", writer_pid);
+        waitpid(writer_pid, &status, 0);
+
+        reader_pid = fork();
+        if (!reader_pid)
         {
-            tokenize(line_tail, &child_narg, child_arg);
+            fprintf(stderr, "starting reader process, pid =  %d\n", getpid());
+            int reader_narg;
+            char *reader_arg[64];
+            tokenize(line_tail, &reader_narg, reader_arg);
             close(pd[1]);
             dup2(pd[0], STDIN_FILENO);
             close(pd[0]);
-            get_command_line(ndir, dirs, line_tail, child_arg[0]);
-            strncpy(line_copy, line_tail, 128);
+            get_command_line(ndir, dirs, line_tail, reader_arg[0]);
+            fprintf(stderr, "line_tail = %s, len = %d\n", line_tail, strlen(line_tail));
+            int r = execve(line_tail, reader_arg, env);
+
+            printf("reader: execve failed r = %d\n", r);
+            exit(1);
         }
-        aarg = child_arg;
+        
+        //fprintf(stderr, "waiting for reader pid = %d\n", reader_pid);
+        sleep(1);
+        //waitpid(reader_pid, &status, 0);
+        //fprintf(stderr, "status = %d\n", status);
+        fprintf(stderr, "child process done, pid = %d\n", getpid());
+        exit(0);
     }
     else
     {

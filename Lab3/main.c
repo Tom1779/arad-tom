@@ -72,7 +72,7 @@ void get_command_line(int ndir, char *dirs[], char *line, char *cmd)
     }
 }
 
-void set_out_redir(int nargs, char* args[])
+void set_out_redir(int nargs, char *args[])
 {
     for (int i = 0; i < nargs; i++)
     {
@@ -107,7 +107,7 @@ void set_out_redir(int nargs, char* args[])
     }
 }
 
-void set_in_redir(int nargs, char* args[])
+void set_in_redir(int nargs, char *args[])
 {
     for (int i = 0; i < nargs; i++)
     {
@@ -167,17 +167,50 @@ void pipe_reader(char *line_tail, int pd[], int ndir, char *dirs[], char *env[])
     exit(1);
 }
 
-void child_proc(int ndir, char *dirs[], int nargs, char* args[], char *line, char *cmd, char *env[])
+void start_pipe(char *line, int ndir, char *dirs[], char *env[])
+{
+    char *line_head = malloc(128);
+    char *line_tail = malloc(128);
+    int writer_pid, reader_pid;
+
+    strncpy(line_head, line, 128);
+    line_head = strtok(line_head, "|");
+    line_tail = strtok(NULL, "\n");
+    char *child_arg[64];
+    int child_narg;
+    int status;
+    int pd[2];
+    pipe(pd);
+    //child_pid = fork();
+    writer_pid = fork();
+    if (!writer_pid) // writer
+    {
+        pipe_writer(line_head, pd, ndir, dirs, env);
+    }
+    fprintf(stderr, "waiting for writer pid = %d\n", writer_pid);
+    waitpid(writer_pid, &status, 0);
+
+    reader_pid = fork();
+    if (!reader_pid)
+    {
+        pipe_reader(line_tail, pd, ndir, dirs, env);
+    }
+
+    //fprintf(stderr, "waiting for reader pid = %d\n", reader_pid);
+    sleep(1);
+    //waitpid(reader_pid, &status, 0);
+    //fprintf(stderr, "status = %d\n", status);
+    fprintf(stderr, "child process done, pid = %d\n", getpid());
+    exit(0);
+}
+
+void child_proc(int ndir, char *dirs[], int nargs, char *args[], char *line, char *cmd, char *env[])
 {
     int is_out_redir = 0;
     int is_in_redir = 0;
     int is_append_redir = 0;
     int is_pipe = 0;
-    int writer_pid, reader_pid;
     int child_pid, child_status;
-    char *line_head = malloc(128);
-    char *line_tail = malloc(128);
-    char *line_copy = malloc(128);
     printf("child sh %d running\n", getpid());
 
     for (int i = 0; i < nargs; i++)
@@ -190,44 +223,15 @@ void child_proc(int ndir, char *dirs[], int nargs, char* args[], char *line, cha
     }
     if (is_pipe)
     {
-        strncpy(line_head, line, 128);
-        line_head = strtok(line_head, "|");
-        line_tail = strtok(NULL, "\n");
-        char *child_arg[64];
-        int child_narg;
-        int status;
-        int pd[2];
-        pipe(pd);
-        //child_pid = fork();
-        writer_pid = fork();
-        if (!writer_pid) // writer
-        {
-            pipe_writer(line_head, pd, ndir, dirs, env);
-        }
-        fprintf(stderr, "waiting for writer pid = %d\n", writer_pid);
-        waitpid(writer_pid, &status, 0);
-
-        reader_pid = fork();
-        if (!reader_pid)
-        {
-            pipe_reader(line_tail, pd, ndir, dirs, env);
-        }
-
-        //fprintf(stderr, "waiting for reader pid = %d\n", reader_pid);
-        sleep(1);
-        //waitpid(reader_pid, &status, 0);
-        //fprintf(stderr, "status = %d\n", status);
-        fprintf(stderr, "child process done, pid = %d\n", getpid());
-        exit(0);
+        start_pipe(line, ndir, dirs, env);
     }
     else
     {
         get_command_line(ndir, dirs, line, cmd);
         set_out_redir(nargs, args);
         set_in_redir(nargs, args);
-        strncpy(line_copy, line, 128);
     }
-    int r = execve(line_copy, args, env);
+    int r = execve(line, args, env);
 
     printf("execve failed r = %d\n", r);
     exit(1);

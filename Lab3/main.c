@@ -6,9 +6,6 @@
 #include <errno.h>
 #include <unistd.h>
 
-char *arg[64]; // token string pointers
-int nargs;     // number of token strings
-
 char path[512]; // number of dirs
 
 int tokenize(char *line, int *narg, char *args[64]) // YOU have done this in LAB2
@@ -70,38 +67,38 @@ void get_command_line(int ndir, char *dirs[], char *line, char *cmd)
     }
     if (!is_file)
     {
-        fprintf(stderr, "invalid command %s\n", arg[0]);
+        fprintf(stderr, "invalid command %s\n", cmd);
         exit(1);
     }
 }
 
-void set_out_redir()
+void set_out_redir(int nargs, char* args[])
 {
     for (int i = 0; i < nargs; i++)
     {
-        if (!strcmp(arg[i], ">"))
+        if (!strcmp(args[i], ">"))
         {
             if (i + 1 < nargs)
             {
                 char filename[128];
-                strncpy(filename, arg[i + 1], 128);
+                strncpy(filename, args[i + 1], 128);
                 printf("redirecting output to %s\n", filename);
                 //is_out_redir = 1;
-                arg[i] = 0;
+                args[i] = 0;
                 int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
                 dup2(fd, STDOUT_FILENO);
                 close(fd);
                 break;
             }
         }
-        if (!strcmp(arg[i], ">>"))
+        if (!strcmp(args[i], ">>"))
         {
             if (i + 1 < nargs)
             {
                 char filename[128];
-                strncpy(filename, arg[i + 1], 128);
+                strncpy(filename, args[i + 1], 128);
                 //is_append_redir = 1;
-                arg[i] = 0;
+                args[i] = 0;
                 close(1);
                 open(filename, O_WRONLY | O_APPEND, 0644);
                 break;
@@ -110,22 +107,22 @@ void set_out_redir()
     }
 }
 
-void set_in_redir()
+void set_in_redir(int nargs, char* args[])
 {
     for (int i = 0; i < nargs; i++)
     {
-        if (!arg[i])
+        if (!args[i])
         {
             continue;
         }
-        if (!strcmp(arg[i], "<"))
+        if (!strcmp(args[i], "<"))
         {
             if (i + 1 < nargs)
             {
                 char filename[128];
-                strncpy(filename, arg[i + 1], 128);
+                strncpy(filename, args[i + 1], 128);
                 //is_in_redir = 1;
-                arg[i] = 0;
+                args[i] = 0;
                 close(0);
                 open(filename, O_RDONLY);
                 printf("line: %d\n", __LINE__);
@@ -138,14 +135,15 @@ void set_in_redir()
 void pipe_writer(char *line_head, int pd[], int ndir, char *dirs[], char *env[])
 {
     fprintf(stderr, "starting writer process, pid =  %d\n", getpid());
-    int writer_narg;
-    char *writer_arg[64];
-    tokenize(line_head, &writer_narg, writer_arg);
+    int nargs;
+    char *args[64];
+    tokenize(line_head, &nargs, args);
+    set_in_redir(nargs, args);
     close(pd[0]);
     dup2(pd[1], STDOUT_FILENO);
     close(pd[1]);
-    get_command_line(ndir, dirs, line_head, writer_arg[0]);
-    int r = execve(line_head, writer_arg, env);
+    get_command_line(ndir, dirs, line_head, args[0]);
+    int r = execve(line_head, args, env);
 
     printf("writer: execve failed r = %d\n", r);
     exit(1);
@@ -154,21 +152,22 @@ void pipe_writer(char *line_head, int pd[], int ndir, char *dirs[], char *env[])
 void pipe_reader(char *line_tail, int pd[], int ndir, char *dirs[], char *env[])
 {
     fprintf(stderr, "starting reader process, pid =  %d\n", getpid());
-    int reader_narg;
-    char *reader_arg[64];
-    tokenize(line_tail, &reader_narg, reader_arg);
+    int nargs;
+    char *args[64];
+    tokenize(line_tail, &nargs, args);
+    set_out_redir(nargs, args);
     close(pd[1]);
     dup2(pd[0], STDIN_FILENO);
     close(pd[0]);
-    get_command_line(ndir, dirs, line_tail, reader_arg[0]);
+    get_command_line(ndir, dirs, line_tail, args[0]);
     fprintf(stderr, "line_tail = %s, len = %d\n", line_tail, strlen(line_tail));
-    int r = execve(line_tail, reader_arg, env);
+    int r = execve(line_tail, args, env);
 
     printf("reader: execve failed r = %d\n", r);
     exit(1);
 }
 
-void child_proc(int ndir, char *dirs[], char *line, char *cmd, char *env[])
+void child_proc(int ndir, char *dirs[], int nargs, char* args[], char *line, char *cmd, char *env[])
 {
     int is_out_redir = 0;
     int is_in_redir = 0;
@@ -179,13 +178,12 @@ void child_proc(int ndir, char *dirs[], char *line, char *cmd, char *env[])
     char *line_head = malloc(128);
     char *line_tail = malloc(128);
     char *line_copy = malloc(128);
-    char **aarg;
     printf("child sh %d running\n", getpid());
 
     for (int i = 0; i < nargs; i++)
     { // show token strings
-        printf("arg[%d] = %s\n", i, arg[i]);
-        if (!strcmp(arg[i], "|"))
+        printf("arg[%d] = %s\n", i, args[i]);
+        if (!strcmp(args[i], "|"))
         {
             is_pipe = 1;
         }
@@ -225,12 +223,11 @@ void child_proc(int ndir, char *dirs[], char *line, char *cmd, char *env[])
     else
     {
         get_command_line(ndir, dirs, line, cmd);
-        set_out_redir();
-        set_in_redir();
+        set_out_redir(nargs, args);
+        set_in_redir(nargs, args);
         strncpy(line_copy, line, 128);
-        aarg = arg;
     }
-    int r = execve(line_copy, aarg, env);
+    int r = execve(line_copy, args, env);
 
     printf("execve failed r = %d\n", r);
     exit(1);
@@ -238,6 +235,8 @@ void child_proc(int ndir, char *dirs[], char *line, char *cmd, char *env[])
 
 int main(int argc, char *argv[], char *env[])
 {
+    char *arg[64]; // token string pointers
+    int nargs;     // number of token strings
     int pid, status;
     char *cmd;
     char line[128];
@@ -285,7 +284,7 @@ int main(int argc, char *argv[], char *env[])
         }
         else
         {
-            child_proc(ndir, dirs, line, cmd, env);
+            child_proc(ndir, dirs, nargs, arg, line, cmd, env);
         }
     }
 }

@@ -192,7 +192,7 @@ void child_proc(int ndir, char *dirs[], int nargs, char* args[], char *line, cha
     {
         strncpy(line_head, line, 128);
         line_head = strtok(line_head, "|");
-        line_tail = strtok(NULL, "|");
+        line_tail = strtok(NULL, "\n");
         char *child_arg[64];
         int child_narg;
         int status;

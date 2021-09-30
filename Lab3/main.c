@@ -9,8 +9,6 @@
 char *arg[64]; // token string pointers
 int nargs;     // number of token strings
 
-char dpath[128]; // hold dir strings in PATH
-
 char path[512]; // number of dirs
 
 int tokenize(char *line, int *narg, char *args[64]) // YOU have done this in LAB2
@@ -50,7 +48,7 @@ void parent_proc(int *pid, int *status)
 {
     printf("sh %d forked a child sh %d\n", getpid(), *pid);
     printf("sh %d wait for child sh %d to terminate\n", getpid(), *pid);
-    waitpid(*pid, status);
+    waitpid(*pid, status, 0);
     printf("ZOMBIE child=%d exitStatus=%x\n", *pid, *status);
     printf("main sh %d repeat loop\n", getpid());
 }
@@ -145,7 +143,7 @@ void child_proc(int ndir, char *dirs[], char *line, char *cmd, char *env[])
     int is_pipe = 0;
     int child_pid, child_status;
     char *line_head = malloc(128);
-    char *line_tail = malloc (128);
+    char *line_tail = malloc(128);
     char *line_copy = malloc(128);
     char **aarg;
     printf("child sh %d running\n", getpid());
@@ -196,7 +194,6 @@ void child_proc(int ndir, char *dirs[], char *line, char *cmd, char *env[])
         strncpy(line_copy, line, 128);
         aarg = arg;
     }
-
     int r = execve(line_copy, aarg, env);
 
     printf("execve failed r = %d\n", r);
@@ -215,10 +212,6 @@ int main(int argc, char *argv[], char *env[])
     printf("PATH: %s\n", path);
     parse_path(path, dirs, &ndir);
 
-    // The base code assume only ONE dir[0] -> "/bin"
-    // YOU do the general case of many dirs from PATH !!!!
-    // dir[0] = "/bin";
-    // ndir   = 1;
     printf("ndir = %d\n", ndir);
 
     // show dirs

@@ -6,10 +6,23 @@
 #include <errno.h>
 #include <unistd.h>
 
+int tokenize(char *line, int *narg, char *args[]);
+void parse_path(char *pathname, char *dir[], int *ndir);
+void parent_proc(int *pid, int *status);
+void get_command_line(int ndir, char *dirs[], char *line, char *cmd);
+void set_out_redir(int nargs, char *args[]);
+void set_in_redir(int nargs, char *args[]);
+void pipe_writer(char *line_head, int pd[], int ndir, char *dirs[], char *env[]);
+void pipe_reader(char *line_tail, int pd[], int ndir, char *dirs[], char *env[]);
+void print_args(int nargs, char *args[]);
+int is_pipe(int nargs, char *args[]);
+void start_pipe(char *line, int ndir, char *dirs[], char *env[]);
+void child_proc(int ndir, char *dirs[], int nargs, char *args[], char *line, char *cmd, char *env[]);
+
 char path[512]; // number of dirs
 
-int tokenize(char *line, int *narg, char *args[64]) // YOU have done this in LAB2
-{                                                   // YOU better know how to apply it from now on
+int tokenize(char *line, int *narg, char *args[]) // YOU have done this in LAB2
+{                                                 // YOU better know how to apply it from now on
     char *tokens;
     int size = strlen(line) + 1;
     tokens = malloc(size);
@@ -83,7 +96,6 @@ void set_out_redir(int nargs, char *args[])
                 char filename[128];
                 strncpy(filename, args[i + 1], 128);
                 printf("redirecting output to %s\n", filename);
-                //is_out_redir = 1;
                 args[i] = 0;
                 int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
                 dup2(fd, STDOUT_FILENO);
@@ -97,7 +109,6 @@ void set_out_redir(int nargs, char *args[])
             {
                 char filename[128];
                 strncpy(filename, args[i + 1], 128);
-                //is_append_redir = 1;
                 args[i] = 0;
                 close(1);
                 open(filename, O_WRONLY | O_APPEND, 0644);
@@ -121,7 +132,6 @@ void set_in_redir(int nargs, char *args[])
             {
                 char filename[128];
                 strncpy(filename, args[i + 1], 128);
-                //is_in_redir = 1;
                 args[i] = 0;
                 close(0);
                 open(filename, O_RDONLY);
@@ -155,16 +165,43 @@ void pipe_reader(char *line_tail, int pd[], int ndir, char *dirs[], char *env[])
     int nargs;
     char *args[64];
     tokenize(line_tail, &nargs, args);
-    set_out_redir(nargs, args);
     close(pd[1]);
     dup2(pd[0], STDIN_FILENO);
     close(pd[0]);
+    //int new_args = is_pipe(nargs, args);
+    if (is_pipe(nargs, args))
+    {
+        start_pipe(line_tail, ndir, dirs, env);
+        exit(0);
+    }
+    print_args(nargs, args);
+    set_out_redir(nargs, args);
     get_command_line(ndir, dirs, line_tail, args[0]);
     fprintf(stderr, "line_tail = %s, len = %d\n", line_tail, strlen(line_tail));
     int r = execve(line_tail, args, env);
 
     printf("reader: execve failed r = %d\n", r);
     exit(1);
+}
+
+void print_args(int nargs, char *args[])
+{
+    for (int i = 0; i < nargs; i++)
+    {
+        printf("arg[%d] = %s\n", i, args[i]);
+    }
+}
+
+int is_pipe(int nargs, char *args[])
+{
+    for (int i = 0; i < nargs; i++)
+    {
+        if (!strcmp(args[i], "|"))
+        {
+            return i;
+        }
+    }
+    return 0;
 }
 
 void start_pipe(char *line, int ndir, char *dirs[], char *env[])
@@ -197,40 +234,26 @@ void start_pipe(char *line, int ndir, char *dirs[], char *env[])
     }
 
     //fprintf(stderr, "waiting for reader pid = %d\n", reader_pid);
-    sleep(1);
-    //waitpid(reader_pid, &status, 0);
-    //fprintf(stderr, "status = %d\n", status);
-    fprintf(stderr, "child process done, pid = %d\n", getpid());
-    exit(0);
 }
 
 void child_proc(int ndir, char *dirs[], int nargs, char *args[], char *line, char *cmd, char *env[])
 {
-    int is_out_redir = 0;
-    int is_in_redir = 0;
-    int is_append_redir = 0;
-    int is_pipe = 0;
-    int child_pid, child_status;
     printf("child sh %d running\n", getpid());
 
-    for (int i = 0; i < nargs; i++)
-    { // show token strings
-        printf("arg[%d] = %s\n", i, args[i]);
-        if (!strcmp(args[i], "|"))
-        {
-            is_pipe = 1;
-        }
-    }
-    if (is_pipe)
+    print_args(nargs, args);
+    if (is_pipe(nargs, args))
     {
         start_pipe(line, ndir, dirs, env);
+        //waitpid(reader_pid, &status, 0);
+        //fprintf(stderr, "status = %d\n", status);
+        fprintf(stderr, "child process done, pid = %d\nWait 5 seconds...\n", getpid());
+        //sleep(1);
+        exit(0);
     }
-    else
-    {
-        get_command_line(ndir, dirs, line, cmd);
-        set_out_redir(nargs, args);
-        set_in_redir(nargs, args);
-    }
+
+    get_command_line(ndir, dirs, line, cmd);
+    set_out_redir(nargs, args);
+    set_in_redir(nargs, args);
     int r = execve(line, args, env);
 
     printf("execve failed r = %d\n", r);

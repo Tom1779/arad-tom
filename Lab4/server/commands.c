@@ -150,16 +150,22 @@ int server_put(char *line)
     printf("%s\n", __FUNCTION__);
     char line_copy[MAX];
     char buf[MAX];
-    strcpy(line_copy, line);
     char *size_string;
     char *path;
+    FILE *file;
+
+    memset(buf, 0, MAX);
+    strcpy(line_copy, line);
     strtok(line_copy, " ");
-    size_string = strtok(line_copy, " ");
+    size_string = strtok(0, " ");
     path = strtok(0, " ");
     int size = atoi(size_string);
     int bytes_written = 0;
-    int fd = fopen(path, 'w');
-    if (!fd)
+    printf("path: %s\n", path);
+
+    file = fopen(path, "w");
+
+    if (!file)
     {
         sprintf(buf, "could not open %s for writing\n", path);
         printf("%s", buf);
@@ -177,21 +183,80 @@ int server_put(char *line)
             printf("server: client died, server loops\n");
             return -1;
         }
-        if((bytes_written + n) > size)
+        if ((bytes_written + n) > size)
         {
             n = size - bytes_written;
         }
-        write(fd, buf, n);
+        printf("\nrecieved: n=%d, buf= %s\n", n, buf);
+        write(fileno(file), buf, n);
         bytes_written += n;
-        if(bytes_written == size)
+        if (bytes_written == size)
         {
             break;
         }
     }
+    fclose(file);
     return 0;
 }
 
 int server_get(char *line)
 {
     printf("%s\n", __FUNCTION__);
+    printf("function: %s\n", __FUNCTION__);
+    int is_file = 0;
+    char *path;
+    char line_copy[MAX];
+    char buf[MAX];
+
+    strcpy(line_copy, line);
+    //parse command
+    strtok(line_copy, " ");
+    path = strtok(0, " ");
+    //check file exists and is readable
+    //if okay to proceed send file
+    int source_fd = open(path, O_RDONLY);
+    if (-1 == source_fd)
+    {
+        printf("failed to open source file %s, errno = %d\n", path, errno);
+        printf("error: %s\n", strerror(errno));
+        sprintf(buf, "-1");
+        write(csock, buf, MAX);
+        return 0;
+    }
+    //get file size
+    struct stat st;
+    stat(path, &st);
+    printf("file: %s; size is %ld bytes\n", path, st.st_size);
+
+    sprintf(buf, "%ld", st.st_size);
+    n = write(csock, buf, MAX);
+    printf("server: wrote n=%d bytes; line=%s\n", n, buf);
+
+    ssize_t byte_size;
+    int byte_sent = 0;
+    while (1)
+    {
+        memset(buf, 0, MAX);
+        byte_size = read(source_fd, buf, MAX);
+        if (!byte_size)
+        {
+            break;
+        }
+        if (-1 == byte_size)
+        {
+            printf("failed to read bytes\n");
+            return -1;
+        }
+        printf("sending: %s\n", buf);
+        n = write(csock, buf, MAX);
+        byte_sent += byte_size;
+        if (byte_sent > st.st_size)
+        {
+            printf("read more than file size, byte sent = %d bytes\n", byte_sent);
+        }
+        printf("server: sent %d bytes\n", n);
+    }
+    close(path);
+
+    return 0;
 }

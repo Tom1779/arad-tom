@@ -78,7 +78,7 @@ int remote_ls(char *line)
     printf("client: read n=%d bytes; echo=%s\n", n, ans);
     while (1)
     {
-        if(!strcmp(ans, "end"))
+        if (!strcmp(ans, "end"))
         {
             break;
         }
@@ -115,6 +115,7 @@ int remote_put(char *line)
     stat(lpath, &st);
     printf("local file size is %ld bytes\n", st.st_size);
     char buf[MAX];
+
     sprintf(buf, "put %ld %s", st.st_size, rpath);
     //send a message to the server checking if the location to be written is writable
     n = write(sock, buf, MAX);
@@ -132,11 +133,12 @@ int remote_put(char *line)
         return -1;
     }
     ssize_t byte_size;
-    int byte_sent = 0; 
+    int byte_sent = 0;
     while (1)
     {
+        memset(buf, 0, MAX);
         byte_size = read(source_fd, buf, MAX);
-        if(!byte_size)
+        if (!byte_size)
         {
             break;
         }
@@ -145,9 +147,10 @@ int remote_put(char *line)
             printf("failed to read bytes\n");
             return -1;
         }
+        printf("sending: %s\n", buf);
         n = write(sock, buf, MAX);
         byte_sent += byte_size;
-        if(byte_sent > st.st_size)
+        if (byte_sent > st.st_size)
         {
             printf("read more than file size, byte sent = %d bytes\n", byte_sent);
         }
@@ -160,17 +163,64 @@ int remote_put(char *line)
 
 int remote_get(char *line)
 {
-    printf("function: %s\n", __FUNCTION__);
-    //parse the command
+    printf("%s\n", __FUNCTION__);
+    char line_copy[MAX];
+    char buf[MAX];
+    char *lpath;
+    char *rpath;
+    int size;
+    int bytes_written = 0;
+    FILE *file;
 
-    //check destination file is writeable open for append and close
+    memset(buf, 0, MAX);
+    strcpy(line_copy, line);
+    strtok(line_copy, " "); // remove "get" command
+    rpath = strtok(0, " ");
+    lpath = strtok(0, " ");
 
-    // Send line to server
-    n = write(sock, line, MAX);
-    printf("client: wrote n=%d bytes; line=%s\n", n, line);
-    // server sends size
+    printf("path: %s\n", lpath);
 
-    // read file from server
+    file = fopen(lpath, "w");
+
+    if (!file)
+    {
+        printf("could not open %s for writing\n", lpath);
+        return 0;
+    }
+    sprintf(buf, "get %s", rpath);
+    printf("%s", buf);
+    n = write(sock, buf, MAX);
+
+    n = read(sock, ans, MAX);
+
+    size = atoi(ans);
+
+    if(size < 0)
+    {
+        printf("get failed, server error\n");
+        return 0;
+    }
+    while (1)
+    {
+        n = read(sock, buf, MAX);
+        if (n == 0)
+        {
+            printf("server died\n");
+            return -1;
+        }
+        if ((bytes_written + n) > size)
+        {
+            n = size - bytes_written;
+        }
+        printf("\nrecieved: n=%d, buf= %s\n", n, buf);
+        write(fileno(file), buf, n);
+        bytes_written += n;
+        if (bytes_written == size)
+        {
+            break;
+        }
+    }
+    fclose(file);
 
     return 0;
 }

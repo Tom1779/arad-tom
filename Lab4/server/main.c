@@ -1,8 +1,15 @@
 #include "server.h"
+#include "commands.h"
 
 int main()
 {
     char line[MAX];
+    char line_copy[MAX];
+    char *cmd;
+    const int NUM_CMDS = 8;
+    char *cmds[] = {"rm", "mkdir", "rmdir", "pwd", "cd", "ls", "put", "get"};
+    void *func[] = {server_rm, server_mkdir, server_rmdir, server_pwd, server_cd, server_ls, server_put, server_get};
+    int (*cmd_func)(char *) = NULL;
     server_init();
     while (1)
     { // Try to accept a client request
@@ -21,8 +28,8 @@ int main()
                inet_ntoa(client_addr.sin_addr.s_addr),
                ntohs(client_addr.sin_port));
         printf("---------------------------------------------–\n");
-            // Processing loop: client_sock <== data ==> client
-            while (1)
+        // Processing loop: client_sock <== data ==> client
+        while (1)
         {
             n = read(csock, line, MAX);
             if (n == 0)
@@ -31,11 +38,21 @@ int main()
                 close(csock);
                 break;
             }
+
             // show the line string
             printf("server: read n=%d bytes; line=%s\n", n, line);
-            // echo line to client
-            n = write(csock, line, MAX);
-            printf("server: wrote n=%d bytes; ECHO=%s\n", n, line);
+
+            strcpy(line_copy, line);
+            cmd = strtok(line_copy, " ");
+            for (int i = 0; i < NUM_CMDS; i++)
+            {
+                if (!strcmp(cmds[i], cmd))
+                {
+                    cmd_func = func[i];
+                    int r = (*cmd_func)(line);
+                    break;
+                }
+            }
             printf("server: ready for next request\n");
         }
     }

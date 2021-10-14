@@ -1,9 +1,15 @@
 #include "client.h"
+#include "remote.h"
+#include "local.h"
 
 int main()
 {
-    int n;
-    char line[MAX], ans[MAX];
+    char line[MAX];
+    char line_copy[MAX];
+    char *cmd;
+    const int NUM_CMDS = 16;
+    char *cmds[] = {"quit", "lrm", "lmkdir", "lrmdir", "lpwd", "lcd", "lls", "lcat", "rm", "mkdir", "rmdir", "pwd", "cd", "ls", "put", "get"};
+    void *func[] = {NULL, local_rm, local_mkdir, local_rmdir, local_pwd, local_cd, local_ls, local_cat, remote_rm, remote_mkdir, remote_rmdir, remote_pwd, remote_cd, remote_ls, remote_put, remote_get};
     client_init();
     printf("******** processing loop *********\n");
     while (1)
@@ -14,11 +20,23 @@ int main()
         line[strlen(line) - 1] = 0; // kill \n at end
         if (line[0] == 0)           // exit if NULL line
             exit(0);
-        // Send line to server
-        n = write(sock, line, MAX);
-        printf("client: wrote n=%d bytes; line=%s\n", n, line);
-        // Read a line from sock and show it
-        n = read(sock, ans, MAX);
-        printf("client: read n=%d bytes; echo=%s\n", n, ans);
+        strcpy(line_copy, line);
+        cmd = strtok(line_copy, " ");
+        printf("cmd = %s\n", cmd);
+        int (*cmd_func)(char *) = NULL;
+        for (int i = 0; i < NUM_CMDS; i++)
+        {
+            if (!strcmp(cmds[i], cmd))
+            {
+                cmd_func = func[i];
+                if (!cmd_func)
+                {
+                    exit(0);
+                }
+                int r = (*cmd_func)(line);
+                break;
+            }
+        }
+
     }
 }

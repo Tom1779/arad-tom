@@ -1,4 +1,4 @@
-SOURCES=main.c client.c
+SOURCES=main.c client.c remote.c local.c
 TARGET=main
 
 all: $(TARGET)

@@ -1,4 +1,4 @@
-SOURCES=main.c server.c
+SOURCES=main.c server.c commands.c
 TARGET=main
 
 all: $(TARGET)

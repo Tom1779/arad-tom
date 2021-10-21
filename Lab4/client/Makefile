@@ -4,7 +4,7 @@ TARGET=main
 all: $(TARGET)
 
 $(TARGET): $(SOURCES)
-	gcc -o $@ $^ -m32
+	gcc -g -ggdb -O0 -o $@ $^ -m32
 
 clean:
 	rm -f $(TARGET)

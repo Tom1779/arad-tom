@@ -4,6 +4,9 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <time.h>
+#include <pwd.h>
+#include <grp.h>
 
 #include "client.h"
 

@@ -109,7 +109,11 @@ int server_ls(char *line)
     DIR *directory;
     struct dirent *contents;
     struct stat fileStat;
+    struct passwd *pw;
+    struct group *gr;
+    struct tm * timeinfo;
     char dir_name[MAX];
+    char full_path[MAX * 2];
     char buf[1024];
     int files = 0;
     if (strcmp(line, "ls"))
@@ -135,7 +139,16 @@ int server_ls(char *line)
     while ((contents = readdir(directory)))
     {
         files++;
-        stat(contents->d_name, &fileStat);
+        sprintf(full_path, "%s/%s", dir_name, contents->d_name);
+        r = stat(full_path, &fileStat);
+        if (r)
+        {
+            printf("error: %s\n", strerror(errno));
+            continue;
+        }
+        pw = getpwuid(fileStat.st_uid);
+        gr = getgrgid(fileStat.st_gid);
+        timeinfo = localtime(&fileStat.st_ctime);
         sprintf(buf, (S_ISDIR(fileStat.st_mode)) ? "d" : "-");
         sprintf(buf + strlen(buf), (fileStat.st_mode & S_IRUSR) ? "r" : "-");
         sprintf(buf + strlen(buf), (fileStat.st_mode & S_IWUSR) ? "w" : "-");
@@ -145,13 +158,13 @@ int server_ls(char *line)
         sprintf(buf + strlen(buf), (fileStat.st_mode & S_IXGRP) ? "x" : "-");
         sprintf(buf + strlen(buf), (fileStat.st_mode & S_IROTH) ? "r" : "-");
         sprintf(buf + strlen(buf), (fileStat.st_mode & S_IWOTH) ? "w" : "-");
-        sprintf(buf + strlen(buf), (fileStat.st_mode & S_IXOTH) ? "x " : "- ");
-        sprintf(buf + strlen(buf), "\tFile Size: %d bytes ", fileStat.st_size);
-        sprintf(buf + strlen(buf), "\tNumber of Links: %d ", fileStat.st_nlink);
-        sprintf(buf + strlen(buf), "\tFile inode: \t%d ", fileStat.st_ino);
-
-       
-        sprintf(buf + strlen(buf), "File Name: %s\n", contents->d_name);
+        sprintf(buf + strlen(buf), (fileStat.st_mode & S_IXOTH) ? "x" : "-");
+        sprintf(buf + strlen(buf), " %3d", fileStat.st_nlink);
+        sprintf(buf + strlen(buf), " %s", (pw) ? pw->pw_name : "---");
+        sprintf(buf + strlen(buf), " %s", (gr) ? gr->gr_name : "---");
+        sprintf(buf + strlen(buf), " %5d", fileStat.st_size);
+        sprintf(buf + strlen(buf), " %s", asctime(timeinfo));
+        sprintf(buf + strlen(buf) - 1, " %s", contents->d_name);
         printf("%s", buf);
         n = write(csock, buf, 1024);
     }

@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <pwd.h>
+#include <grp.h>
 #include <sys/stat.h>
 #include <netdb.h>
 #define MAX 256

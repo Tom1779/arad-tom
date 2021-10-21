@@ -70,20 +70,21 @@ int remote_cd(char *line)
 
 int remote_ls(char *line)
 {
+    char answer[1024];
     printf("function: %s\n", __FUNCTION__);
     // Send line to server
     n = write(sock, line, MAX);
     printf("client: wrote n=%d bytes; line=%s\n", n, line);
-    n = read(sock, ans, MAX);
-    printf("client: read n=%d bytes; echo=%s\n", n, ans);
+    n = read(sock, answer, 1024);
+    printf("client: read n=%d bytes; echo=%s\n", n, answer);
     while (1)
     {
-        if (!strcmp(ans, "end"))
+        if (!strcmp(answer, "end"))
         {
             break;
         }
-        printf("client: read n=%d bytes; dir entry=%s\n", n, ans);
-        n = read(sock, ans, MAX);
+        printf("%s\n", answer);
+        n = read(sock, answer, 1024);
     }
 
     return 0;

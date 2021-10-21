@@ -108,8 +108,9 @@ int server_ls(char *line)
     printf("%s\n", __FUNCTION__);
     DIR *directory;
     struct dirent *contents;
+    struct stat fileStat;
     char dir_name[MAX];
-    char buf[MAX];
+    char buf[1024];
     int files = 0;
     if (strcmp(line, "ls"))
     {
@@ -134,9 +135,25 @@ int server_ls(char *line)
     while ((contents = readdir(directory)))
     {
         files++;
-        sprintf(buf, "File %3d: %s\n", files, contents->d_name);
+        stat(contents->d_name, &fileStat);
+        sprintf(buf, (S_ISDIR(fileStat.st_mode)) ? "d" : "-");
+        sprintf(buf + strlen(buf), (fileStat.st_mode & S_IRUSR) ? "r" : "-");
+        sprintf(buf + strlen(buf), (fileStat.st_mode & S_IWUSR) ? "w" : "-");
+        sprintf(buf + strlen(buf), (fileStat.st_mode & S_IXUSR) ? "x" : "-");
+        sprintf(buf + strlen(buf), (fileStat.st_mode & S_IRGRP) ? "r" : "-");
+        sprintf(buf + strlen(buf), (fileStat.st_mode & S_IWGRP) ? "w" : "-");
+        sprintf(buf + strlen(buf), (fileStat.st_mode & S_IXGRP) ? "x" : "-");
+        sprintf(buf + strlen(buf), (fileStat.st_mode & S_IROTH) ? "r" : "-");
+        sprintf(buf + strlen(buf), (fileStat.st_mode & S_IWOTH) ? "w" : "-");
+        sprintf(buf + strlen(buf), (fileStat.st_mode & S_IXOTH) ? "x " : "- ");
+        sprintf(buf + strlen(buf), "\tFile Size: %d bytes ", fileStat.st_size);
+        sprintf(buf + strlen(buf), "\tNumber of Links: %d ", fileStat.st_nlink);
+        sprintf(buf + strlen(buf), "\tFile inode: \t%d ", fileStat.st_ino);
+
+       
+        sprintf(buf + strlen(buf), "File Name: %s\n", contents->d_name);
         printf("%s", buf);
-        n = write(csock, buf, MAX);
+        n = write(csock, buf, 1024);
     }
     sprintf(buf, "end");
     printf("%s", buf);

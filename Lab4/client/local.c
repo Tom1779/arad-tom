@@ -74,6 +74,7 @@ int local_ls(char *line)
 {
     DIR *directory;
     struct dirent *contents;
+    struct stat fileStat;
     char dir_name[MAX];
     int files = 0;
     if (strcmp(line, "lls"))
@@ -97,8 +98,24 @@ int local_ls(char *line)
     }
     while ((contents = readdir(directory)))
     {
+        stat(contents->d_name, &fileStat);
         files++;
-        printf("File %3d: %s\n", files, contents->d_name);
+        printf((S_ISDIR(fileStat.st_mode)) ? "d" : "-");
+        printf((fileStat.st_mode & S_IRUSR) ? "r" : "-");
+        printf((fileStat.st_mode & S_IWUSR) ? "w" : "-");
+        printf((fileStat.st_mode & S_IXUSR) ? "x" : "-");
+        printf((fileStat.st_mode & S_IRGRP) ? "r" : "-");
+        printf((fileStat.st_mode & S_IWGRP) ? "w" : "-");
+        printf((fileStat.st_mode & S_IXGRP) ? "x" : "-");
+        printf((fileStat.st_mode & S_IROTH) ? "r" : "-");
+        printf((fileStat.st_mode & S_IWOTH) ? "w" : "-");
+        printf((fileStat.st_mode & S_IXOTH) ? "x " : "- ");
+        printf("\tFile Size: %d bytes ", fileStat.st_size);
+        printf("\tNumber of Links: %d ", fileStat.st_nlink);
+        printf("\tFile inode: \t%d ", fileStat.st_ino);
+
+       
+        printf("File Name: %s\n", contents->d_name);
     }
     closedir(directory);
     return 0;

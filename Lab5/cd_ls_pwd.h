@@ -29,8 +29,8 @@ int cd();
 int ls_file(MINODE *mip, char *name);
 int ls_dir(MINODE *mip);
 int ls(char *pathname);
-int rpwd(MINODE *wd);
-char *pwd(MINODE *wd);
+void rpwd(MINODE *wd);
+void pwd(MINODE *wd);
 
 
 

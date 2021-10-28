@@ -3,7 +3,7 @@
 /************* cd_ls_pwd.c file **************/
 int cd()
 {
-  printf("cd: under construction READ textbook!!!!\n");
+  //printf("cd: under construction READ textbook!!!!\n");
 
   int ino = getino(pathname); // return error if ino=0
   MINODE *mip = iget(dev, ino);
@@ -27,7 +27,7 @@ int ls_file(MINODE *mip, char *name)
   pw = getpwuid(mip->INODE.i_uid);
   gr = getgrgid(mip->INODE.i_gid);
   timeinfo = localtime(&(mip->INODE.i_mtime));
-  printf("0x%x\n", mip->INODE.i_mode);
+  //printf("0x%x\n", mip->INODE.i_mode);
   sprintf(buf, ((mip->INODE.i_mode & EXT2_S_IFMT) == EXT2_S_IFDIR) ? "d" : "-");
   sprintf(buf + strlen(buf), (mip->INODE.i_mode & S_IRUSR) ? "r" : "-");
   sprintf(buf + strlen(buf), (mip->INODE.i_mode & S_IWUSR) ? "w" : "-");
@@ -167,7 +167,7 @@ void rpwd(MINODE *wd)
 
 void pwd(MINODE *wd)
 {
-  printf("pwd: READ HOW TO pwd in textbook!!!!\n");
+  //printf("pwd: READ HOW TO pwd in textbook!!!!\n");
   if (wd == root)
   {
     printf("/\n");

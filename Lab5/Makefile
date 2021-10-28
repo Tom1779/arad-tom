@@ -16,7 +16,7 @@ diskimage:
 
 .PHONY: run
 run: diskimage
-	$(TARGET)
+	./main
 
 clean:
 	rm -f diskimage $(TARGET)

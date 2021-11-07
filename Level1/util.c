@@ -199,7 +199,7 @@ int getino(char *pathname)
 int findmyname(MINODE *parent, u32 myino, char myname[])
 {
    char block[BLKSIZE];
-   char* cp;
+   char *cp;
    get_block(dev, parent->INODE.i_block[0], block);
    dp = (DIR *)block;
    cp = block;
@@ -227,7 +227,33 @@ int findmyname(MINODE *parent, u32 myino, char myname[])
 
 int findino(MINODE *mip, u32 *myino) // myino = i# of . return i# of ..
 {
-   // mip points at a DIR minode
-   // WRITE your code here: myino = ino of .  return ino of ..
-   // all in i_block[0] of this DIR INODE.
+   int parent_ino;
+   char block[BLKSIZE], temp[256];
+   char *cp;
+   get_block(dev, mip->INODE.i_block[0], block);
+   dp = (DIR *)block;
+   cp = block;
+
+   while (cp < block + BLKSIZE)
+   {
+      if (!(dp->inode))
+      {
+         break;
+      }
+      strncpy(temp, dp->name, dp->name_len);
+      temp[dp->name_len] = 0;
+
+      if (!strcmp(temp, ".."))
+      {
+         parent_ino = dp->inode;
+      }
+      else if (!strcmp(temp, "."))
+      {
+         *myino = dp->inode;
+      }
+
+      cp += dp->rec_len;
+      dp = (DIR *)cp;
+   }
+   return parent_ino;
 }

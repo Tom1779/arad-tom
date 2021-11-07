@@ -103,40 +103,14 @@ int ls(char *pathname)
 
 void rpwd(MINODE *wd)
 {
-  char block[BLKSIZE], temp[256];
-  char *cp;
-  __u32 my_ino, parent_ino;
+  char temp[256];
+  u32 my_ino, parent_ino;
   MINODE *pip;
-
   if (wd == root)
   {
     return;
   }
-  get_block(dev, wd->INODE.i_block[0], block);
-  dp = (DIR *)block;
-  cp = block;
-
-  while (cp < block + BLKSIZE)
-  {
-    if (!(dp->inode))
-    {
-      break;
-    }
-    strncpy(temp, dp->name, dp->name_len);
-    temp[dp->name_len] = 0;
-
-    if (!strcmp(temp, ".."))
-    {
-      parent_ino = dp->inode;
-    }
-    else if (!strcmp(temp, "."))
-    {
-      my_ino = dp->inode;
-    }
-
-    cp += dp->rec_len;
-    dp = (DIR *)cp;
-  }
+  parent_ino = findino(wd, &my_ino);
   pip = iget(dev, parent_ino);
   int r = findmyname(pip, my_ino, temp);
   if (r)

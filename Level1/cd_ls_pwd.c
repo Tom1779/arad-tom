@@ -104,10 +104,9 @@ int ls(char *pathname)
 void rpwd(MINODE *wd)
 {
   char block[BLKSIZE], temp[256];
-  DIR *dp;
   char *cp;
   __u32 my_ino, parent_ino;
-  MINODE* pip;
+  MINODE *pip;
 
   if (wd == root)
   {
@@ -126,11 +125,11 @@ void rpwd(MINODE *wd)
     strncpy(temp, dp->name, dp->name_len);
     temp[dp->name_len] = 0;
 
-    if(!strcmp(temp, ".."))
+    if (!strcmp(temp, ".."))
     {
       parent_ino = dp->inode;
     }
-    else if(!strcmp(temp, "."))
+    else if (!strcmp(temp, "."))
     {
       my_ino = dp->inode;
     }
@@ -139,27 +138,11 @@ void rpwd(MINODE *wd)
     dp = (DIR *)cp;
   }
   pip = iget(dev, parent_ino);
-  get_block(dev, pip->INODE.i_block[0], block);
-  dp = (DIR *)block;
-  cp = block;
-  temp[0] = 0;
-
-  while (cp < block + BLKSIZE)
+  int r = findmyname(pip, my_ino, temp);
+  if (r)
   {
-    if (!(dp->inode))
-    {
-      break;
-    }
-    strncpy(temp, dp->name, dp->name_len);
-    temp[dp->name_len] = 0;
-
-    if(my_ino == dp->inode)
-    {
-      break;
-    }
-
-    cp += dp->rec_len;
-    dp = (DIR *)cp;
+    printf("\nError: could not find directory name\n");
+    return;
   }
   rpwd(pip);
   printf("/%s", temp);

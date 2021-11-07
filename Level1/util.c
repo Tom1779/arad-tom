@@ -31,7 +31,7 @@ int tokenize(char *pathname)
    name[n] = 0;
 
    for (i = 0; i < n; i++)
-   printf("%s  ", name[i]);
+      printf("%s  ", name[i]);
    printf("\n");
 }
 
@@ -198,9 +198,31 @@ int getino(char *pathname)
 // These 2 functions are needed for pwd()
 int findmyname(MINODE *parent, u32 myino, char myname[])
 {
-   // WRITE YOUR code here
-   // search parent's data block for myino; SAME as search() but by myino
-   // copy its name STRING to myname[ ]
+   char block[BLKSIZE];
+   char* cp;
+   get_block(dev, parent->INODE.i_block[0], block);
+   dp = (DIR *)block;
+   cp = block;
+   myname[0] = 0;
+
+   while (cp < block + BLKSIZE)
+   {
+      if (!(dp->inode))
+      {
+         break;
+      }
+      strncpy(myname, dp->name, dp->name_len);
+      myname[dp->name_len] = 0;
+
+      if (myino == dp->inode)
+      {
+         return 0;
+      }
+
+      cp += dp->rec_len;
+      dp = (DIR *)cp;
+   }
+   return 1;
 }
 
 int findino(MINODE *mip, u32 *myino) // myino = i# of . return i# of ..

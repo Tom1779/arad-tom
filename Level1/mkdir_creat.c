@@ -7,6 +7,9 @@ int kmkdir()
 
 int makedir()
 {
+    char dirname[128];
+    char base_name[64];
+    
     return 0;
 }
 

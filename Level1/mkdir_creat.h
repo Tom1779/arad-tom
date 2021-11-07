@@ -4,7 +4,16 @@
 #include "type.h"
 #include "util.h"
 
-extern char pathname[128];
+extern MINODE minode[NMINODE];
+extern MINODE *root;
+extern PROC proc[NPROC], *running;
+
+extern char gpath[128];
+extern char *name[64];
+extern int n;
+
+extern int fd, dev;
+extern int nblocks, ninodes, bmap, imap, iblk;
 
 int kmkdir();
 int makedir();

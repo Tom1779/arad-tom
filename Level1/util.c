@@ -98,16 +98,6 @@ void iput(MINODE *mip)
    if (!mip->dirty)
       return;
 
-   /* write INODE back to disk */
-   /**************** NOTE ******************************
-  For mountroot, we never MODIFY any loaded INODE
-                 so no need to write it back
-  FOR LATER WROK: MUST write INODE back to disk if refCount==0 && DIRTY
-
-  Write YOUR code here to write INODE back to disk
- *****************************************************/
-
-   /*
    block = (mip->ino - 1) / 8 + iblk;
    offset = (mip->ino - 1) % 8;
    // get block containing this inode
@@ -115,8 +105,7 @@ void iput(MINODE *mip)
    ip = (INODE *)buf + offset;      // ip points at INODE
    *ip = mip->INODE;                // copy INODE to inode in block
    put_block(mip->dev, block, buf); // write back to disk
-   midalloc(mip);                   // mip->refCount = 0;
-   */
+
 }
 
 int search(MINODE *mip, char *name)
@@ -170,6 +159,7 @@ int getino(char *pathname)
    else
       mip = running->cwd;
 
+   ino = mip->ino;
    mip->refCount++; // because we iput(mip) later
 
    tokenize(pathname);

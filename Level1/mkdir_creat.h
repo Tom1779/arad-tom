@@ -22,8 +22,10 @@ int tst_bit(char *buf, int bit);
 int set_bit(char *buf, int bit);
 int ialloc(int dev);
 int balloc(int dev);
+int check_path(MINODE** pmip, char* base_name);
 int kmkdir(MINODE* pmip, char* basename);
 int makedir();
+int kcreat(MINODE* pmip, char* basename);
 int create();
 int enter_name(MINODE *pip, int ino, char *name);
 

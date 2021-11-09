@@ -104,13 +104,11 @@ int kmkdir(MINODE *pmip, char *basename)
     return 0;
 }
 
-int makedir()
+int check_path(MINODE **pmip, char *base_name)
 {
     char dirname[128];
-    char base_name[64];
     int index;
     int pino;
-    MINODE *pmip;
 
     if (!strcmp(pathname, "") || !strcmp(pathname, "/"))
     {
@@ -142,23 +140,63 @@ int makedir()
         printf("Error: invalid directory pathname\n");
         return 0;
     }
-    pmip = iget(dev, pino);
-    if (!((pmip->INODE.i_mode & EXT2_S_IFMT) == EXT2_S_IFDIR))
+    *pmip = iget(dev, pino);
+    if (!(((*pmip)->INODE.i_mode & EXT2_S_IFMT) == EXT2_S_IFDIR))
     {
         printf("Error: new directory location is not valid\n");
         return 0;
     }
-    if (search(pmip, base_name))
+    if (search(*pmip, base_name))
     {
         printf("Error: directory already exists\n");
         return 0;
     }
+}
+
+int makedir()
+{
+    char base_name[64];
+    MINODE *pmip;
+    check_path(&pmip, base_name);
     kmkdir(pmip, base_name);
     return 0;
 }
 
+int kcreat(MINODE *pmip, char *basename)
+{
+    int ino, blk;
+    MINODE *mip;
+    char *cp;
+    char buf[BLKSIZE];
+
+    ino = ialloc(dev);
+    //section 4.2 page 334
+    mip = iget(dev, ino);
+    INODE *ip = &mip->INODE;
+    ip->i_mode = 0x81A4;      // 040644: DIR type and permissions
+    ip->i_uid = running->uid; // owner uid
+    ip->i_gid = running->gid; // group Id
+    ip->i_size = 0;     // size in bytes
+    ip->i_links_count = 2;    // links count=2 because of . and ..
+    ip->i_atime = ip->i_ctime = ip->i_mtime = time(0L);
+    ip->i_blocks = 2; // LINUX: Blocks count in 512-byte chunks
+    ip->i_block[0] = blk;
+    for (int i = 1; i < 14; i++)
+    {
+        ip->i_block[i] = 0;
+    }
+    mip->dirty = 1; // mark minode dirty
+    iput(mip);      // write INODE to disk
+
+    enter_name(pmip, ino, basename);
+}
+
 int create()
 {
+    char base_name[64];
+    MINODE *pmip;
+    check_path(&pmip, base_name);
+    kcreat(pmip, base_name);
     return 0;
 }
 

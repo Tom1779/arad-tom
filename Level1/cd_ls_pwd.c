@@ -18,6 +18,7 @@ int cd()
 
 int ls_file(MINODE *mip, char *name)
 {
+  //printf("ls_file\n");
   struct passwd *pw;
   struct group *gr;
   struct tm *timeinfo;
@@ -50,8 +51,8 @@ int ls_file(MINODE *mip, char *name)
 int ls_dir(MINODE *mip)
 {
   //printf("ls_dir: list CWD's file names; YOU FINISH IT as ls -l\n");
-
-  char block[BLKSIZE], temp[256];
+  int block = 0;
+  char buf[BLKSIZE], temp[256];
   DIR *dp;
   char *cp;
 
@@ -60,33 +61,42 @@ int ls_dir(MINODE *mip)
     printf("warning cant deal with directories that have multiple blocks\n");
     return;
   }*/
-
-  get_block(dev, mip->INODE.i_block[0], block);
-  dp = (DIR *)block;
-  cp = block;
-
-  while (cp < block + BLKSIZE)
+  for (int i = 0; i < 12; i++)
   {
-    if (!(dp->inode))
+    block = mip->INODE.i_block[i];
+    if(!block)
     {
       break;
     }
-    strncpy(temp, dp->name, dp->name_len);
-    temp[dp->name_len] = 0;
+    get_block(dev, block, buf);
+    dp = (DIR *)buf;
+    cp = buf;
 
-    MINODE *file_mip = iget(dev, dp->inode);
+    while (cp < buf + BLKSIZE)
+    {
+      if (!(dp->inode))
+      {
+        break;
+      }
+      strncpy(temp, dp->name, dp->name_len);
+      temp[dp->name_len] = 0;
 
-    //printf("%s  ", temp);
-    ls_file(file_mip, temp);
+      MINODE *file_mip = iget(dev, dp->inode);
 
-    cp += dp->rec_len;
-    dp = (DIR *)cp;
+      //printf("%s  ", temp);
+      iput(file_mip);
+      ls_file(file_mip, temp);
+
+      cp += dp->rec_len;
+      dp = (DIR *)cp;
+    }
   }
   printf("\n");
 }
 
 int ls(char *pathname)
 {
+  //printf("ls\n");
   int inod_num;
   MINODE *mip;
   if (!strcmp(pathname, ""))

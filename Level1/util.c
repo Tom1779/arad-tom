@@ -50,6 +50,7 @@ MINODE *iget(int dev, int ino)
       if (mip->refCount && mip->dev == dev && mip->ino == ino)
       {
          mip->refCount++;
+         //printf("inode number =  %2d, refcount = %d\n", ino, mip->refCount);
          //printf("found [%d %d] as minode[%d] in core\n", dev, ino, i);
          return mip;
       }
@@ -62,6 +63,7 @@ MINODE *iget(int dev, int ino)
       {
          //printf("allocating NEW minode[%d] for [%d %d]\n", i, dev, ino);
          mip->refCount = 1;
+         //printf("inode number =  %2d, refcount = %d\n", ino, mip->refCount);
          mip->dev = dev;
          mip->ino = ino;
 
@@ -92,6 +94,7 @@ void iput(MINODE *mip)
       return;
 
    mip->refCount--;
+   //printf("inode number =  %2d, refcount = %d\n", mip->ino, mip->refCount);
 
    if (mip->refCount > 0)
       return;
@@ -105,12 +108,12 @@ void iput(MINODE *mip)
    ip = (INODE *)buf + offset;      // ip points at INODE
    *ip = mip->INODE;                // copy INODE to inode in block
    put_block(mip->dev, block, buf); // write back to disk
-
 }
 
 int search(MINODE *mip, char *name)
 {
    int i;
+   int block = 0;
    char *cp, c, sbuf[BLKSIZE], temp[256];
    DIR *dp;
    INODE *ip;
@@ -118,26 +121,32 @@ int search(MINODE *mip, char *name)
    printf("search for %s in MINODE = [%d, %d]\n", name, mip->dev, mip->ino);
    ip = &(mip->INODE);
 
-   /*** search for name in mip's data blocks: ASSUME i_block[0] ONLY ***/
-
-   get_block(dev, ip->i_block[0], sbuf);
-   dp = (DIR *)sbuf;
-   cp = sbuf;
-   printf("  ino   rlen  nlen  name\n");
-
-   while (cp < sbuf + BLKSIZE)
+   for (int i = 0; i < 12; i++)
    {
-      strncpy(temp, dp->name, dp->name_len);
-      temp[dp->name_len] = 0;
-      printf("%4d  %4d  %4d    %s\n",
-             dp->inode, dp->rec_len, dp->name_len, dp->name);
-      if (strcmp(temp, name) == 0)
+      block = ip->i_block[i];
+      if (!block)
       {
-         printf("found %s : ino = %d\n", temp, dp->inode);
-         return dp->inode;
+         return 0;
       }
-      cp += dp->rec_len;
-      dp = (DIR *)cp;
+      get_block(dev, block, sbuf);
+      dp = (DIR *)sbuf;
+      cp = sbuf;
+      printf("  ino   rlen  nlen  name\n");
+
+      while (cp < sbuf + BLKSIZE)
+      {
+         strncpy(temp, dp->name, dp->name_len);
+         temp[dp->name_len] = 0;
+          printf("%4d  %4d  %4d    %s\n",
+                 dp->inode, dp->rec_len, dp->name_len, dp->name);
+         if (strcmp(temp, name) == 0)
+         {
+            printf("found %s : ino = %d\n", temp, dp->inode);
+            return dp->inode;
+         }
+         cp += dp->rec_len;
+         dp = (DIR *)cp;
+      }
    }
    return 0;
 }
@@ -161,6 +170,7 @@ int getino(char *pathname)
 
    ino = mip->ino;
    mip->refCount++; // because we iput(mip) later
+   //printf("inode number =  %2d, refcount = %d\n", ino, mip->refCount);
 
    tokenize(pathname);
 
@@ -177,8 +187,15 @@ int getino(char *pathname)
          printf("name %s does not exist\n", name[i]);
          return 0;
       }
-      iput(mip);
-      mip = iget(dev, ino);
+      ino = search(mip, name[i]);
+      if (!ino)
+      {
+         printf("no such component name %s\n", name[i]);
+         iput(mip);
+         return 0;
+      }
+      iput(mip);            // release current minode
+      mip = iget(dev, ino); // switch to new minode
    }
 
    iput(mip);
@@ -188,29 +205,39 @@ int getino(char *pathname)
 // These 2 functions are needed for pwd()
 int findmyname(MINODE *parent, u32 myino, char myname[])
 {
-   char block[BLKSIZE];
+   char buf[BLKSIZE];
+   int block = 0;
    char *cp;
-   get_block(dev, parent->INODE.i_block[0], block);
-   dp = (DIR *)block;
-   cp = block;
-   myname[0] = 0;
-
-   while (cp < block + BLKSIZE)
+   for (int i = 0; i < 12; i++)
    {
-      if (!(dp->inode))
+      block = parent->INODE.i_block[i];
+      if(!block)
       {
-         break;
-      }
-      strncpy(myname, dp->name, dp->name_len);
-      myname[dp->name_len] = 0;
-
-      if (myino == dp->inode)
-      {
+         printf("child directory entry not found in parent I blocks\n");
          return 0;
       }
+      get_block(dev, block, buf);
+      dp = (DIR *)buf;
+      cp = buf;
+      myname[0] = 0;
 
-      cp += dp->rec_len;
-      dp = (DIR *)cp;
+      while (cp < buf + BLKSIZE)
+      {
+         if (!(dp->inode))
+         {
+            break;
+         }
+         strncpy(myname, dp->name, dp->name_len);
+         myname[dp->name_len] = 0;
+
+         if (myino == dp->inode)
+         {
+            return 0;
+         }
+
+         cp += dp->rec_len;
+         dp = (DIR *)cp;
+      }
    }
    return 1;
 }
@@ -246,4 +273,18 @@ int findino(MINODE *mip, u32 *myino) // myino = i# of . return i# of ..
       dp = (DIR *)cp;
    }
    return parent_ino;
+}
+
+int count_dir_entries(char *buf)
+{
+   DIR *dp = (DIR *)buf;
+   char *cp = buf;
+   int count = 0;
+   while (cp < buf + BLKSIZE)
+   {
+      count++;
+      cp += dp->rec_len;
+      dp = (DIR *)cp;
+   }
+   return count;
 }

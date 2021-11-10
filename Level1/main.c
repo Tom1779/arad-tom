@@ -11,6 +11,8 @@
 
 #include "type.h"
 #include "cd_ls_pwd.h"
+#include "mkdir_creat.h"
+#include "rmdir.h"
 
 extern MINODE *iget();
 
@@ -111,7 +113,6 @@ int main(int argc, char *argv[])
   printf("root refCount = %d\n", root->refCount);
 
   // WRTIE code here to create P1 as a USER process
-
   while (1)
   {
     printf("input command : [ls|cd|pwd|quit] ");
@@ -141,6 +142,8 @@ int main(int argc, char *argv[])
       makedir();
     else if (strcmp(cmd, "creat") == 0)
       create();
+    else if (strcmp(cmd, "rmdir") == 0)
+      removedir();
     else if (strcmp(cmd, "quit") == 0)
       quit();
   }

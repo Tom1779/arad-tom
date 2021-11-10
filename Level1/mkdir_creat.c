@@ -63,6 +63,7 @@ int kmkdir(MINODE *pmip, char *basename)
     char buf[BLKSIZE];
 
     ino = ialloc(dev);
+    printf("makedir: %s, inode = %2d\n", basename, ino);
     blk = balloc(dev);
     {
         //section 4.2 page 334
@@ -113,7 +114,7 @@ int check_path(MINODE **pmip, char *base_name)
     if (!strcmp(pathname, "") || !strcmp(pathname, "/"))
     {
         printf("invalid pathname\n");
-        return 0;
+        return -1;
     }
     for (index = strlen(pathname) - 1; index >= 0; index--)
     {
@@ -138,26 +139,32 @@ int check_path(MINODE **pmip, char *base_name)
     if (!pino)
     {
         printf("Error: invalid directory pathname\n");
-        return 0;
+        return -1;
     }
     *pmip = iget(dev, pino);
     if (!(((*pmip)->INODE.i_mode & EXT2_S_IFMT) == EXT2_S_IFDIR))
     {
         printf("Error: new directory location is not valid\n");
-        return 0;
+        return -1;
     }
     if (search(*pmip, base_name))
     {
         printf("Error: directory already exists\n");
-        return 0;
+        return -1;
     }
+    return 0;
 }
 
 int makedir()
 {
     char base_name[64];
+    int r = 0;
     MINODE *pmip;
-    check_path(&pmip, base_name);
+    r = check_path(&pmip, base_name);
+    if(r == -1)
+    {
+        return;
+    }
     kmkdir(pmip, base_name);
     return 0;
 }
@@ -170,6 +177,7 @@ int kcreat(MINODE *pmip, char *basename)
     char buf[BLKSIZE];
 
     ino = ialloc(dev);
+    printf("create: %s, inode = %2d\n", basename, ino);
     //section 4.2 page 334
     mip = iget(dev, ino);
     INODE *ip = &mip->INODE;

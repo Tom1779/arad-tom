@@ -13,6 +13,7 @@
 #include "cd_ls_pwd.h"
 #include "mkdir_creat.h"
 #include "rmdir.h"
+#include "link_unlink.h"
 
 extern MINODE *iget();
 
@@ -123,7 +124,7 @@ int main(int argc, char *argv[])
       continue;
     pathname[0] = 0;
 
-    sscanf(line, "%s %s", cmd, pathname);
+    sscanf(line, "%s %[^\t\n]", cmd, pathname);
     printf("cmd=%s pathname=%s\n", cmd, pathname);
 
     if (strcmp(cmd, "ls") == 0)
@@ -144,6 +145,10 @@ int main(int argc, char *argv[])
       create();
     else if (strcmp(cmd, "rmdir") == 0)
       removedir();
+    else if (strcmp(cmd, "unlink") == 0)
+      unlink();
+    else if (strcmp(cmd, "link") == 0)
+      link();
     else if (strcmp(cmd, "quit") == 0)
       quit();
   }

@@ -101,6 +101,7 @@ int rm_child(MINODE *pmip, char *name)
     int child_inode;
     int child_found = 0;
     char buf[BLKSIZE];
+    char temp[128];
     DIR *dp;
     int prev_rec_len = 0;
     char *cp;
@@ -123,8 +124,13 @@ int rm_child(MINODE *pmip, char *name)
         {
             if (dp->inode == child_inode)
             {
-                child_found++;
-                break;
+                strncpy(temp, dp->name, dp->name_len);
+                temp[dp->name_len] = 0;
+                if (!strcmp(temp, name))
+                {
+                    child_found++;
+                    break;
+                }
             }
             prev_rec_len = dp->rec_len;
             cp += dp->rec_len;

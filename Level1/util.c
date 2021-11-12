@@ -137,8 +137,8 @@ int search(MINODE *mip, char *name)
       {
          strncpy(temp, dp->name, dp->name_len);
          temp[dp->name_len] = 0;
-          printf("%4d  %4d  %4d    %s\n",
-                 dp->inode, dp->rec_len, dp->name_len, dp->name);
+         printf("%4d  %4d  %4d    %s\n",
+                dp->inode, dp->rec_len, dp->name_len, dp->name);
          if (strcmp(temp, name) == 0)
          {
             printf("found %s : ino = %d\n", temp, dp->inode);
@@ -211,7 +211,7 @@ int findmyname(MINODE *parent, u32 myino, char myname[])
    for (int i = 0; i < 12; i++)
    {
       block = parent->INODE.i_block[i];
-      if(!block)
+      if (!block)
       {
          printf("child directory entry not found in parent I blocks\n");
          return 0;

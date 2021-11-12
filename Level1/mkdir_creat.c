@@ -185,7 +185,7 @@ int kcreat(MINODE *pmip, char *basename)
     ip->i_uid = running->uid; // owner uid
     ip->i_gid = running->gid; // group Id
     ip->i_size = 0;     // size in bytes
-    ip->i_links_count = 2;    // links count=2 because of . and ..
+    ip->i_links_count = 1;
     ip->i_atime = ip->i_ctime = ip->i_mtime = time(0L);
     ip->i_blocks = 2; // LINUX: Blocks count in 512-byte chunks
     ip->i_block[0] = blk;

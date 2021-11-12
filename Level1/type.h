@@ -25,6 +25,10 @@ DIR *dp;
 #define NMINODE 128
 #define NPROC 2
 
+#define EXT2_S_IFMT 0xF000  /* format mask  */
+#define EXT2_S_IFLNK 0xA000 /* symbolic link */
+#define EXT2_S_IFREG 0x8000 /* directory */
+
 typedef struct minode
 {
   INODE INODE;  // INODE structure on disk

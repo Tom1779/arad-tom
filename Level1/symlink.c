@@ -1,20 +1,22 @@
 #include "symlink.h"
 int symlink() 
 {
-    char *old_file;
-    char *new_file;
+    char old_file[128];
+    char new_file[128];
+    char* tok;
     char* cp;
-    DIR* dp;
-    char buf[BLKSIZE];
     int block;
     int old_file_name = 0;
     int oino;
     int nino = 0;
+    int pino;
     MINODE* mip;
     MINODE* pmip;
 
-    old_file = strtok(pathname, " ");
-    new_file = strtok(0, "\n");
+    tok = strtok(pathname, " ");
+    strcpy(old_file, tok);
+    tok = strtok(0, "\n");
+    strcpy(new_file, tok);
 
     old_file_name = strlen(old_file);
 
@@ -39,19 +41,33 @@ int symlink()
         return 0;
     }
     mip = iget(dev, nino);
-    block = mip->INODE.i_block[0];
     mip->INODE.i_mode = 0xA1ED;
-    get_block(mip->dev, block, buf);
-    strcpy(buf, old_file);
-    put_block(mip->dev, block, buf);
     mip->INODE.i_size = old_file_name;
+    cp = (char*)mip->INODE.i_block;
+    strncpy(cp, old_file, strlen(old_file));
     mip->dirty = 1;
     iput(mip);
 
+    pino = getino(dirname(new_file));
+    pmip = iget(dev, pino);
+    pmip->dirty = 1;
+    iput(pmip);
 
 }
 
-int readlink(char* filename, char* buf) 
+int readlink(MINODE* mip, char* buf) 
 {
+    char* cp;
+
+    if(!((mip->INODE.i_mode & EXT2_S_IFMT) == EXT2_S_IFLNK))
+    {
+        printf("file is not a link type\n");
+        return 0;
+    }
+    cp = (char*) mip->INODE.i_block;
+    strncpy(buf, cp, mip->INODE.i_size);
     
+    buf[mip->INODE.i_size] = '\0';
+
+    return mip->INODE.i_size;
 }

@@ -7,6 +7,7 @@
 #include <ext2fs/ext2fs.h>
 
 #include "type.h"
+#include "symlink.h"
 
 extern MINODE minode[NMINODE];
 extern MINODE *root;

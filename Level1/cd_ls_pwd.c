@@ -22,7 +22,9 @@ int ls_file(MINODE *mip, char *name)
   struct passwd *pw;
   struct group *gr;
   struct tm *timeinfo;
+  char file_path[512];
   char buf[1024];
+  char lnk[128];
   //printf("ls_file: to be done: READ textbook!!!!\n");
   // READ Chapter 11.7.3 HOW TO ls
   pw = getpwuid(mip->INODE.i_uid);
@@ -45,6 +47,11 @@ int ls_file(MINODE *mip, char *name)
   sprintf(buf + strlen(buf), " %5d", mip->INODE.i_size);
   sprintf(buf + strlen(buf), " %s", asctime(timeinfo));
   sprintf(buf + strlen(buf) - 1, " %s", name);
+  if(((mip->INODE.i_mode & EXT2_S_IFMT) == EXT2_S_IFLNK))
+  {
+    readlink(mip, lnk);
+    sprintf(buf + strlen(buf), " -> %s", lnk);
+  }
   printf("%s\n", buf);
 }
 

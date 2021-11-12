@@ -14,6 +14,7 @@
 #include "mkdir_creat.h"
 #include "rmdir.h"
 #include "link_unlink.h"
+#include "symlink.h"
 
 extern MINODE *iget();
 
@@ -116,7 +117,7 @@ int main(int argc, char *argv[])
   // WRTIE code here to create P1 as a USER process
   while (1)
   {
-    printf("input command : [ls|cd|pwd|quit] ");
+    printf("input command : [ls|cd|pwd|mkdir|creat|rmdir|link|unlink|symlink|quit] ");
     fgets(line, 128, stdin);
     line[strlen(line) - 1] = 0;
 
@@ -149,6 +150,8 @@ int main(int argc, char *argv[])
       unlink();
     else if (strcmp(cmd, "link") == 0)
       link();
+    else if (strcmp(cmd, "symlink") == 0)
+      symlink();
     else if (strcmp(cmd, "quit") == 0)
       quit();
   }

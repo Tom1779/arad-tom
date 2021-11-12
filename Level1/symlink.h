@@ -8,7 +8,7 @@
 #define EXT2_S_IFLNK 0xA000 /* symbolic link */
 
 int symlink();
-int readlink(char* filename, char* buf);
+int readlink(MINODE* mip, char* buf);
 
 
 

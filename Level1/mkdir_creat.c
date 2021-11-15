@@ -263,6 +263,7 @@ int enter_name(MINODE *pip, int ino, char *name)
     dp->name_len = strlen(name);
     dp->inode = ino;
     put_block(dev, blk, buf);
+    pip->INODE.i_links_count++;
     iput(pip);
 
     return 0;

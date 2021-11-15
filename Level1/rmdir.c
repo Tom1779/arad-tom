@@ -55,11 +55,13 @@ int removedir()
     if (!((mip->INODE.i_mode & EXT2_S_IFMT) == EXT2_S_IFDIR))
     {
         printf("Error: directory not found\n");
+        iput(mip);
         return 0;
     }
     if (mip->refCount != 1)
     {
         printf("ref count = %d, Direcotry in use and can not be removed\n", mip->refCount);
+        iput(mip);
         return 0;
     }
     get_block(mip->dev, mip->INODE.i_block[0], buf);
@@ -67,9 +69,10 @@ int removedir()
     cp = buf;
     while (cp < buf + BLKSIZE)
     {
-        if (entries > 2)
+        if (entries > 1)
         {
             printf("directory is not empty and cannot be removed\n");
+            iput(mip);
             return 0;
         }
         strcpy(temp, dp->name);

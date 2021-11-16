@@ -1,0 +1,2 @@
+# mkdisk: create a virtual disk diskimage
+cp disk2 diskimage

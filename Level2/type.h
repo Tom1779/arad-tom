@@ -31,15 +31,6 @@ DIR *dp;
 #define EXT2_S_IFREG 0x8000 /* directory */
 
 
-typedef struct oft
-{           // OpenFileTable
-  int mode; //R|W|RW|APP
-  int refCount;
-  MINODE *minodePtr;
-  int offset;
-
-} OFT;
-OFT oft[64]; // oft structs
 
 typedef struct minode
 {
@@ -51,6 +42,16 @@ typedef struct minode
   int mounted;          // for level-3
   struct mntable *mptr; // for level-3
 } MINODE;
+
+typedef struct oft
+{           // OpenFileTable
+  int mode; //R|W|RW|APP
+  int refCount;
+  MINODE *minodePtr;
+  int offset;
+
+} OFT;
+OFT oft[64]; // oft structs
 
 typedef struct proc
 {

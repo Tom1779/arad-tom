@@ -138,7 +138,7 @@ int search(MINODE *mip, char *name)
          strncpy(temp, dp->name, dp->name_len);
          temp[dp->name_len] = 0;
          printf("%4d  %4d  %4d    %s\n",
-                dp->inode, dp->rec_len, dp->name_len, dp->name);
+                dp->inode, (int)dp->rec_len, (int)dp->name_len, temp);
          if (strcmp(temp, name) == 0)
          {
             printf("found %s : ino = %d\n", temp, dp->inode);

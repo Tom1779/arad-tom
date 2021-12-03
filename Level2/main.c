@@ -15,6 +15,7 @@
 #include "rmdir.h"
 #include "link_unlink.h"
 #include "symlink.h"
+#include "open_close_lseek.h"
 
 extern MINODE *iget();
 
@@ -161,6 +162,12 @@ int main(int argc, char *argv[])
       link();
     else if (strcmp(cmd, "symlink") == 0)
       symlink();
+    else if ((strcmp(cmd, "open") == 0))
+      myopen("file1", 0);
+    else if ((strcmp(cmd, "pfd") == 0))
+      pfd();
+    else if ((strcmp(cmd, "cat") == 0))
+      cat();
     else if (strcmp(cmd, "quit") == 0)
       quit();
   }

@@ -10,7 +10,7 @@ int myopen(char *filename, int flags)
     ino = getino(filename);
     if (!ino)
     {
-        //strcpy(pathname, filename);
+        //strcpy(pathname, filename); might work later
         create();
         ino = getino(filename);
     }

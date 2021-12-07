@@ -53,6 +53,7 @@ int myread(int fd, char *buf, int nbytes)
             }
         } // end of while(remain)
     }
+    proc->fd[fd]->offset += count;
     return count;
 }
 

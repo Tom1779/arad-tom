@@ -141,7 +141,8 @@ int search(MINODE *mip, char *name)
                 dp->inode, (int)dp->rec_len, (int)dp->name_len, temp);
          if (strcmp(temp, name) == 0)
          {
-            printf("found %s : ino = %d\n", temp, dp->inode);
+            printf("{ %s:%d } found %s : ino = %d\n", __FILE__, __LINE__, temp, dp->inode);
+            printf("===========================================\n");
             return dp->inode;
          }
          cp += dp->rec_len;

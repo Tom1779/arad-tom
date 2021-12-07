@@ -54,12 +54,12 @@ int init()
     p->uid = p->gid = i;
     p->cwd = 0;
 
-    for(int j = 0; j < NFD; j++)
+    for (int j = 0; j < NFD; j++)
     {
       p->fd[j] = 0;
     }
   }
-  for(int i = 0; i < 64; i++)
+  for (int i = 0; i < 64; i++)
   {
     oft[i].refCount = 0;
   }
@@ -168,6 +168,17 @@ int main(int argc, char *argv[])
       pfd();
     else if ((strcmp(cmd, "cat") == 0))
       cat();
+    else if ((strcmp(cmd, "cp") == 0))
+    {
+      char src[128];
+      char dest[128];
+      char* tok;
+      tok = strtok(pathname, " ");
+      strcpy(src, tok);
+      tok = strtok(0, "\n");
+      strcpy(dest, tok);
+      cp(src, dest);
+    }
     else if (strcmp(cmd, "quit") == 0)
       quit();
   }

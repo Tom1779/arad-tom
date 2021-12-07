@@ -1,0 +1,9 @@
+#!/bin/bash
+
+./mkdisk
+
+rm ./a.out 2> /dev/null
+
+gcc -w -g -ggdb -O0 *.c -m32
+
+./a.out

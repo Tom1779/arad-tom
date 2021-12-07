@@ -39,21 +39,16 @@ int myread(int fd, char *buf, int nbytes)
         get_block(mip->dev, blk, kbuf);
         cp = kbuf + start;
         remain = BLKSIZE - start;
-        while (remain)
-        { // copy bytes from kbuf[ ] to buf[ ]
-            *buf++ = *cp++;
-            offset++;
-            count++; // inc offset, count;
-            remain--;
-            avil--;
-            nbytes--; // dec remain, avail, nbytes;
-            if (nbytes == 0 || avil == 0)
-            {
-                break;
-            }
-        } // end of while(remain)
+        int min = (remain < nbytes) ? remain : nbytes;
+        min = (avil < min) ? avil : min;
+        memcpy(buf, cp, min);
+        buf += min;
+        offset += min;
+        avil -= min;
+        nbytes -= min;
+        count += min;
     }
-    proc->fd[fd]->offset += count;
+    proc->fd[fd]->offset = offset;
     return count;
 }
 

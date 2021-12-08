@@ -9,6 +9,8 @@ int unlink()
     MINODE *pmip;
     char *parent;
     char *child;
+    char buf[128];
+    strcpy(buf, pathname);
 
     ino = getino(pathname);
     if (!ino)
@@ -22,7 +24,7 @@ int unlink()
         printf("file is not symbolic link or regular and cannot be unlinked\n");
         return 0;
     }
-    parent = dirname(pathname);
+    parent = dirname(buf);
     printf("parent: %s\n", parent);
     child = basename(pathname);
     printf("child: %s\n", child);

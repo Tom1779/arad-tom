@@ -100,7 +100,7 @@ int kmkdir(MINODE *pmip, char *basename)
         dp->name[0] = dp->name[1] = '.';
         put_block(dev, blk, buf); // write to blk on disks
     }
-    enter_name(pmip, ino, basename);
+    enter_name(pmip, ino, basename, 1);
 
     return 0;
 }
@@ -161,8 +161,9 @@ int makedir()
     int r = 0;
     MINODE *pmip;
     r = check_path(&pmip, base_name);
-    if(r == -1)
+    if (r == -1)
     {
+        iput(pmip);
         return;
     }
     kmkdir(pmip, base_name);
@@ -184,7 +185,7 @@ int kcreat(MINODE *pmip, char *basename)
     ip->i_mode = 0x81A4;      // 040644: DIR type and permissions
     ip->i_uid = running->uid; // owner uid
     ip->i_gid = running->gid; // group Id
-    ip->i_size = 0;     // size in bytes
+    ip->i_size = 0;           // size in bytes
     ip->i_links_count = 1;
     ip->i_atime = ip->i_ctime = ip->i_mtime = time(0L);
     ip->i_blocks = 2; // LINUX: Blocks count in 512-byte chunks
@@ -196,19 +197,26 @@ int kcreat(MINODE *pmip, char *basename)
     mip->dirty = 1; // mark minode dirty
     iput(mip);      // write INODE to disk
 
-    enter_name(pmip, ino, basename);
+    enter_name(pmip, ino, basename, 0);
 }
 
 int create()
 {
+    int r;
     char base_name[64];
     MINODE *pmip;
-    check_path(&pmip, base_name);
+    r = check_path(&pmip, base_name);
+    if (r == -1)
+    {
+        iput(pmip);
+        return 0;
+    }
     kcreat(pmip, base_name);
+    iput(pmip);
     return 0;
 }
 
-int enter_name(MINODE *pip, int ino, char *name)
+int enter_name(MINODE *pip, int ino, char *name, int i_links)
 {
     printf("name: %s\n", name);
     int blk;
@@ -263,7 +271,7 @@ int enter_name(MINODE *pip, int ino, char *name)
     dp->name_len = strlen(name);
     dp->inode = ino;
     put_block(dev, blk, buf);
-    pip->INODE.i_links_count++;
+    pip->INODE.i_links_count += i_links;
     iput(pip);
 
     return 0;

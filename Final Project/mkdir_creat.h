@@ -18,7 +18,7 @@ int kmkdir(MINODE* pmip, char* basename);
 int makedir();
 int kcreat(MINODE* pmip, char* basename);
 int create();
-int enter_name(MINODE *pip, int ino, char *name);
+int enter_name(MINODE *pip, int ino, char *name, int i_links);
 
 
 

@@ -29,8 +29,7 @@ DIR *dp;
 #define EXT2_S_IFMT 0xF000  /* format mask  */
 #define EXT2_S_IFLNK 0xA000 /* symbolic link */
 #define EXT2_S_IFREG 0x8000 /* directory */
-
-
+#define EXT2_S_IFDIR 0x4000 /* directory */
 
 typedef struct minode
 {
@@ -63,7 +62,20 @@ typedef struct proc
   int gid;
   MINODE *cwd; // CWD directory pointer
 
-  OFT* fd[NFD];
+  OFT *fd[NFD];
 } PROC;
+
+typedef struct Mount
+{
+  int dev;     // dev (opened vdisk fd number) 0 means FREE
+  int ninodes; // from superblock
+  int nblocks;
+  int bmap; // from GD block
+  int imap;
+  int iblk;
+  struct Minode *mounted_inode;
+  char name[64];       // device name, e.g. mydisk
+  char mount_name[64]; // mounted DIR pathname
+} MOUNT;
 
 #endif

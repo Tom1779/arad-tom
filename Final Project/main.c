@@ -16,6 +16,7 @@
 #include "link_unlink.h"
 #include "symlink.h"
 #include "open_close_lseek.h"
+#include "mount_umount.h"
 
 extern MINODE *iget();
 
@@ -30,6 +31,7 @@ int n;           // number of component strings
 int fd, dev;
 int nblocks, ninodes, bmap, imap, iblk;
 char line[128], cmd[32], pathname[128];
+char *disk = "diskimage";
 
 int init()
 {
@@ -74,9 +76,16 @@ int mount_root()
   root = iget(dev, 2);
   proc[0].cwd = iget(dev, 2);
   proc[1].cwd = iget(dev, 2);
+  mountTable[0].dev = dev;
+  mountTable[0].bmap = bmap;
+  mountTable[0].iblk = iblk;
+  mountTable[0].imap = imap;
+  mountTable[0].nblocks = nblocks;
+  mountTable[0].ninodes = ninodes;
+  strcpy(mountTable[0].name, disk);
+  strcpy(mountTable[0].mount_name, "/");
 }
 
-char *disk = "diskimage";
 int main(int argc, char *argv[])
 {
   int ino;
@@ -127,7 +136,7 @@ int main(int argc, char *argv[])
   // WRTIE code here to create P1 as a USER process
   while (1)
   {
-    printf("input command : [ls|cd|pwd|mkdir|creat|rmdir|link|unlink|symlink|cat|cp|quit] ");
+    printf("input command : [ls|cd|pwd|mkdir|creat|rmdir|link|unlink|symlink|cat|cp|mount|quit] ");
     fgets(line, 128, stdin);
     line[strlen(line) - 1] = 0;
 
@@ -170,12 +179,29 @@ int main(int argc, char *argv[])
     {
       char src[128];
       char dest[128];
-      char* tok;
+      char *tok;
       tok = strtok(pathname, " ");
       strcpy(src, tok);
       tok = strtok(0, "\n");
       strcpy(dest, tok);
       cp(src, dest);
+    }
+    else if ((strcmp(cmd, "mount") == 0))
+    {
+      char mount_point[128] = {0};
+      char filesys[128] = {0};
+      char *tok;
+      tok = strtok(pathname, " ");
+      if (tok)
+      {
+        strcpy(filesys, tok);
+      }
+      tok = strtok(0, "\n");
+      if (tok)
+      {
+        strcpy(mount_point, tok);
+      }
+      mount(filesys, mount_point);
     }
     else if (strcmp(cmd, "quit") == 0)
       quit();

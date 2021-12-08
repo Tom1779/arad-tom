@@ -4,3 +4,5 @@ mtx
 *.bin
 main
 outfile
+disk*
+.vscode

@@ -64,6 +64,7 @@ int link()
     char *child;
     int oino = 0;
     int pino;
+    char temp[128];
     MINODE *omip;
     MINODE *pmip;
 
@@ -87,12 +88,14 @@ int link()
         printf("new file already exists\n");
         return 0;
     }
-    parent = dirname(new_file);
+    strcpy(temp, new_file);
+    parent = dirname(temp);
+    printf("parent: %s\n");
     child = basename(new_file);
     pino = getino(parent);
     pmip = iget(dev, pino);
     // creat entry in new parent DIR with same inode number of old_file
-    enter_name(pmip, oino, child);
+    enter_name(pmip, oino, child, 0);
     omip->INODE.i_links_count++; // inc INODE’s links_count by 1
     omip->dirty = 1;              // for write back by iput(omip)
     iput(omip);

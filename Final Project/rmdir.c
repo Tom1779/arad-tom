@@ -103,6 +103,7 @@ int rm_child(MINODE *pmip, char *name)
 {
     int child_inode;
     int child_found = 0;
+    char dp_name[64];
     char buf[BLKSIZE];
     char temp[128];
     DIR *dp;
@@ -176,7 +177,9 @@ int rm_child(MINODE *pmip, char *name)
         for (int i = 0; i < count; i++)
         {
             dp = (DIR *)cp;
-            printf("name: %s\n", dp->name);
+            strcpy(dp_name, dp->name);
+            dp_name[dp->name_len] = 0;
+            printf("name: %s\n", dp_name);
             cp += dp->rec_len;
         }
         dp->rec_len += rec_len;

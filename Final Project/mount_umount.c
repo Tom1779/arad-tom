@@ -27,7 +27,7 @@ int mount(char *filesys, char *mount_point)
         return 0;
     }
     printf("filesys=%s, mount_point=%s\n", filesys, mount_point);
-    index = mnt_search(mount_point);
+    index = search_mnt_point(mount_point);
     if (index >= 0)
     {
         printf("a filesystem is already mounted at %s\n", mount_point);
@@ -70,7 +70,7 @@ int mount(char *filesys, char *mount_point)
         return 0;
     }
     get_block(fd, 2, buf);
-    GD* g_ptr = (GD *)buf;
+    GD *g_ptr = (GD *)buf;
 
     mountTable[index].dev = fd;
     mountTable[index].bmap = g_ptr->bg_block_bitmap;
@@ -84,6 +84,8 @@ int mount(char *filesys, char *mount_point)
     mip->mounted = 1;
     mip->mptr = &mountTable[index];
     mountTable[index].mounted_inode = mip;
+
+    print_minode_table();
 
     return 0;
 }
@@ -106,7 +108,7 @@ void print_mounted()
     }
 }
 
-int mnt_search(char *mount_point)
+int search_mnt_point(char *mount_point)
 {
     for (int i = 0; i < 8; i++)
     {
@@ -123,6 +125,53 @@ int mnt_alloc()
     for (int i = 0; i < 8; i++)
     {
         if (!mountTable[i].dev)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int umount(char *filesys)
+{
+    int index;
+    int device;
+    MINODE *mip;
+    index = search_mnt_name(filesys);
+    if (index < 0)
+    {
+        printf("filesys %s is not mounted\n", filesys);
+        return 0;
+    }
+    device = mountTable[index].dev;
+    printf("device = %d\n", device);
+
+    for (int i = 0; i < NMINODE; i++)
+    {
+
+        if (minode[i].dev == device)
+        {
+
+            if (minode[i].refCount)
+            {
+                printf("filesys is busy cannot do umount\n");
+                return 0;
+            }
+        }
+    }
+    mip = mountTable[index].mounted_inode;
+    mip->mounted = 0;
+    mip->mptr = 0;
+    iput(mip);
+
+    return 0;
+}
+
+int search_mnt_name(char *filesys)
+{
+    for (int i = 0; i < 8; i++)
+    {
+        if (!strcmp(mountTable[i].name, filesys))
         {
             return i;
         }

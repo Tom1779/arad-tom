@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
   // WRTIE code here to create P1 as a USER process
   while (1)
   {
-    printf("input command : [ls|cd|pwd|mkdir|creat|rmdir|link|unlink|symlink|cat|cp|mount|quit] ");
+    printf("input command : [ls|cd|pwd|mkdir|creat|rmdir|link|unlink|symlink|cat|cp|mount|umount|quit] ");
     fgets(line, 128, stdin);
     line[strlen(line) - 1] = 0;
 
@@ -203,6 +203,8 @@ int main(int argc, char *argv[])
       }
       mount(filesys, mount_point);
     }
+    else if ((strcmp(cmd, "umount") == 0))
+      umount(pathname);
     else if (strcmp(cmd, "quit") == 0)
       quit();
   }

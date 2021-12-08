@@ -289,3 +289,11 @@ int count_dir_entries(char *buf)
    }
    return count;
 }
+
+void print_minode_table() 
+{
+   for(int i = 0; i < NMINODE; i++)
+   {
+      printf("minode[%d]: dev = %d, inode = %d\n", i, minode[i].dev, minode[i].ino);
+   }
+}

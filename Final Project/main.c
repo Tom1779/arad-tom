@@ -81,7 +81,7 @@ int mount_root()
   mountTable[0].ninodes = ninodes;
   strcpy(mountTable[0].name, disk);
   strcpy(mountTable[0].mount_name, "/");
-  
+
   root = iget(dev, 2);
   proc[0].cwd = iget(dev, 2);
   proc[1].cwd = iget(dev, 2);

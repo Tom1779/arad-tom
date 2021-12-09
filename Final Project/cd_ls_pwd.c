@@ -127,6 +127,22 @@ void rpwd(MINODE *wd)
   {
     return;
   }
+  my_ino = wd->ino;
+  if(my_ino == 2)
+  {
+    int index = search_mnt_dev(wd->dev);
+    if(index < 0)
+    {
+      printf("could not find mounted dev %d\n", wd->dev);
+      exit(1);
+    }
+    if(index)
+    {
+      wd = mountTable[index].mounted_inode;
+      my_ino = wd->ino;
+      dev = wd->dev;
+    }
+  }
   parent_ino = findino(wd, &my_ino);
   pip = iget(dev, parent_ino);
   int r = findmyname(pip, my_ino, temp);

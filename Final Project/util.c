@@ -186,6 +186,7 @@ int getino(char *pathname)
    else
       mip = running->cwd;
 
+   dev = mip->dev;
    ino = mip->ino;
    mip->refCount++; // because we iput(mip) later
    //printf("inode number =  %2d, refcount = %d\n", ino, mip->refCount);
@@ -215,6 +216,10 @@ int getino(char *pathname)
             printf("could not find mount table entry\n");
             exit(1);
          }
+         if(mnt_index == 0)
+         {
+            continue;
+         }
          iput(mip);
          mip = mountTable[mnt_index].mounted_inode;
          dev = mip->dev;
@@ -226,6 +231,8 @@ int getino(char *pathname)
          MOUNT *mnt = mip->mptr;
          dev = mnt->dev;
          ino = 2;
+         iput(mip);
+         mip = iget(dev, ino);
       }
    }
 

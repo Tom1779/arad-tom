@@ -14,6 +14,15 @@ int ialloc(int dev) // allocate an inode number from inode_bitmap
 {
     int i;
     char buf[BLKSIZE];
+    int mnt_index = search_mnt_dev(dev);
+
+    if (mnt_index == -1)
+    {
+        printf("could not find mount entry\n");
+        exit(1);
+    }
+    imap = mountTable[mnt_index].imap;
+    ninodes = mountTable[mnt_index].ninodes;
 
     // read inode_bitmap block
     get_block(dev, imap, buf);
@@ -36,6 +45,15 @@ int balloc(int dev)
 {
     int i;
     char buf[BLKSIZE];
+    int mnt_index = search_mnt_dev(dev);
+
+    if (mnt_index == -1)
+    {
+        printf("could not find mount entry\n");
+        exit(1);
+    }
+    bmap = mountTable[mnt_index].bmap;
+    nblocks = mountTable[mnt_index].nblocks;
 
     // read inode_bitmap block
     get_block(dev, bmap, buf);

@@ -13,6 +13,7 @@ int search_mnt_point(char* mount_point);
 int mnt_alloc();
 int umount(char* filesys);
 int search_mnt_name(char* filesys);
+int search_mnt_dev(int dev);
 
 
 #endif

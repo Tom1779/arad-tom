@@ -74,8 +74,8 @@ int mount(char *filesys, char *mount_point)
 
     mountTable[index].dev = fd;
     mountTable[index].bmap = g_ptr->bg_block_bitmap;
-    mountTable[index].iblk = g_ptr->bg_inode_bitmap;
-    mountTable[index].imap = g_ptr->bg_inode_table;
+    mountTable[index].iblk = g_ptr->bg_inode_table;
+    mountTable[index].imap = g_ptr->bg_inode_bitmap;
     mountTable[index].nblocks = s_ptr->s_blocks_count;
     mountTable[index].ninodes = s_ptr->s_inodes_count;
     strcpy(mountTable[index].name, filesys);
@@ -85,7 +85,7 @@ int mount(char *filesys, char *mount_point)
     mip->mptr = &mountTable[index];
     mountTable[index].mounted_inode = mip;
 
-    print_minode_table();
+    print_mounted();
 
     return 0;
 }
@@ -172,6 +172,18 @@ int search_mnt_name(char *filesys)
     for (int i = 0; i < 8; i++)
     {
         if (!strcmp(mountTable[i].name, filesys))
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int search_mnt_dev(int dev) 
+{
+    for (int i = 0; i < 8; i++)
+    {
+        if (mountTable[i].dev == dev)
         {
             return i;
         }

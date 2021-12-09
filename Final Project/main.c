@@ -31,7 +31,7 @@ int n;           // number of component strings
 int fd, dev;
 int nblocks, ninodes, bmap, imap, iblk;
 char line[128], cmd[32], pathname[128];
-char *disk = "diskimage";
+char disk[128] = "diskimage";
 
 int init()
 {
@@ -73,9 +73,6 @@ int mount_root()
 {
 
   printf("mount_root()\n");
-  root = iget(dev, 2);
-  proc[0].cwd = iget(dev, 2);
-  proc[1].cwd = iget(dev, 2);
   mountTable[0].dev = dev;
   mountTable[0].bmap = bmap;
   mountTable[0].iblk = iblk;
@@ -84,6 +81,10 @@ int mount_root()
   mountTable[0].ninodes = ninodes;
   strcpy(mountTable[0].name, disk);
   strcpy(mountTable[0].mount_name, "/");
+  
+  root = iget(dev, 2);
+  proc[0].cwd = iget(dev, 2);
+  proc[1].cwd = iget(dev, 2);
 }
 
 int main(int argc, char *argv[])
@@ -91,6 +92,10 @@ int main(int argc, char *argv[])
   int ino;
   int error = 0;
   char buf[BLKSIZE];
+  if(argc > 1)
+  {
+    strcpy(disk, argv[1]);
+  }
 
   printf("checking EXT2 FS ....");
   if ((fd = open(disk, O_RDWR)) < 0)

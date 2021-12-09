@@ -3,6 +3,15 @@
 int bdalloc(int dev, int block)
 {
     char buf[BLKSIZE];
+    int mnt_index = search_mnt_dev(dev);
+
+    if (mnt_index == -1)
+    {
+        printf("could not find mount entry\n");
+        exit(1);
+    }
+    bmap = mountTable[mnt_index].bmap;
+    nblocks = mountTable[mnt_index].nblocks;
 
     if (block > nblocks)
     {
@@ -20,6 +29,15 @@ int bdalloc(int dev, int block)
 int idalloc(int dev, int ino)
 {
     char buf[BLKSIZE];
+    int mnt_index = search_mnt_dev(dev);
+
+    if (mnt_index == -1)
+    {
+        printf("could not find mount entry\n");
+        exit(1);
+    }
+    imap = mountTable[mnt_index].imap;
+    ninodes = mountTable[mnt_index].ninodes;
 
     if (ino > ninodes)
     {

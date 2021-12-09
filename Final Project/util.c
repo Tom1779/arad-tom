@@ -43,6 +43,14 @@ MINODE *iget(int dev, int ino)
    char buf[BLKSIZE];
    int blk, offset;
    INODE *ip;
+   int mnt_index = search_mnt_dev(dev);
+
+   if (mnt_index == -1)
+   {
+      printf("could not find mount entry\n");
+      exit(1);
+   }
+   iblk = mountTable[mnt_index].iblk;
 
    for (i = 0; i < NMINODE; i++)
    {
@@ -92,6 +100,15 @@ void iput(MINODE *mip)
 
    if (mip == 0)
       return;
+
+   int mnt_index = search_mnt_dev(mip->dev);
+
+   if (mnt_index == -1)
+   {
+      printf("could not find mount entry\n");
+      exit(1);
+   }
+   iblk = mountTable[mnt_index].iblk;
 
    mip->refCount--;
    //printf("inode number =  %2d, refcount = %d\n", mip->ino, mip->refCount);
@@ -188,15 +205,28 @@ int getino(char *pathname)
          printf("name %s does not exist\n", name[i]);
          return 0;
       }
-      ino = search(mip, name[i]);
-      if (!ino)
+      iput(mip);
+      mip = iget(dev, ino);
+      if ((!strcmp(name[i], "..")) && (ino == 2))
       {
-         printf("no such component name %s\n", name[i]);
+         int mnt_index = search_mnt_dev(dev);
+         if (mnt_index == -1)
+         {
+            printf("could not find mount table entry\n");
+            exit(1);
+         }
          iput(mip);
-         return 0;
+         mip = mountTable[mnt_index].mounted_inode;
+         dev = mip->dev;
+         ino = mip->ino;
+         mip->refCount++;
+      } // release current minode
+      else if (mip->mounted)
+      {
+         MOUNT *mnt = mip->mptr;
+         dev = mnt->dev;
+         ino = 2;
       }
-      iput(mip);            // release current minode
-      mip = iget(dev, ino); // switch to new minode
    }
 
    iput(mip);
@@ -290,9 +320,9 @@ int count_dir_entries(char *buf)
    return count;
 }
 
-void print_minode_table() 
+void print_minode_table()
 {
-   for(int i = 0; i < NMINODE; i++)
+   for (int i = 0; i < NMINODE; i++)
    {
       printf("minode[%d]: dev = %d, inode = %d\n", i, minode[i].dev, minode[i].ino);
    }

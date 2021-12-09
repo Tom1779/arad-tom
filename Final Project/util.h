@@ -12,6 +12,7 @@
 #include <time.h>
 
 #include "type.h"
+#include "mount_umount.h"
 
 /**** globals defined in main.c file ****/
 extern MINODE minode[NMINODE];

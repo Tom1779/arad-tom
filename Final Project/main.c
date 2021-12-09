@@ -87,12 +87,31 @@ int mount_root()
   proc[1].cwd = iget(dev, 2);
 }
 
+int access(char *filename) // mode = r|w|x:
+{
+  int ino;
+  MINODE *ip;
+
+  if (running->uid == 0) // SUPERuser always OK
+    return 1;
+
+  ino = getino(filename);
+  ip = iget(dev, ino);
+  if (running->uid == ip->INODE.i_uid)
+  {
+    iput(ip);
+    return 1;
+  }
+  iput(ip);
+  return 0;
+}
+
 int main(int argc, char *argv[])
 {
   int ino;
   int error = 0;
   char buf[BLKSIZE];
-  if(argc > 1)
+  if (argc > 1)
   {
     strcpy(disk, argv[1]);
   }
@@ -169,9 +188,25 @@ int main(int argc, char *argv[])
     else if (strcmp(cmd, "creat") == 0)
       create();
     else if (strcmp(cmd, "rmdir") == 0)
+    {
+      int prem = access(pathname);
+      if (!prem)
+      {
+        printf("Not owner of the file and hence cannot rmdir\n");
+        continue;
+      }
       removedir();
+    }
     else if (strcmp(cmd, "unlink") == 0)
+    {
+      int prem = access(pathname);
+      if (!prem)
+      {
+        printf("Not owner of the file and hence cannot rmdir\n");
+        continue;
+      }
       unlink();
+    }
     else if (strcmp(cmd, "link") == 0)
       link();
     else if (strcmp(cmd, "symlink") == 0)

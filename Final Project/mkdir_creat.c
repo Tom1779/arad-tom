@@ -2,12 +2,12 @@
 
 int tst_bit(char *buf, int bit)
 {
-    return buf[bit / 8] & (1 << (bit % 8));
+    return buf[bit / 8] & (1 << (bit % 8)); //check if 1 or 0
 }
 
 int set_bit(char *buf, int bit)
 {
-    buf[bit / 8] |= (1 << (bit % 8));
+    buf[bit / 8] |= (1 << (bit % 8)); // set corresponding bit to 1
 }
 
 int ialloc(int dev) // allocate an inode number from inode_bitmap
@@ -21,18 +21,18 @@ int ialloc(int dev) // allocate an inode number from inode_bitmap
         printf("could not find mount entry\n");
         exit(1);
     }
-    imap = mountTable[mnt_index].imap;
+    imap = mountTable[mnt_index].imap; //update imap and bmap in case mounted device is not root device
     ninodes = mountTable[mnt_index].ninodes;
 
     // read inode_bitmap block
     get_block(dev, imap, buf);
 
-    for (i = 0; i < ninodes; i++)
+    for (i = 0; i < ninodes; i++) // loop until the end of the inode bitmap
     {
-        if (tst_bit(buf, i) == 0)
+        if (tst_bit(buf, i) == 0) // inode is free
         {
-            set_bit(buf, i);
-            put_block(dev, imap, buf);
+            set_bit(buf, i); // set bit to 1
+            put_block(dev, imap, buf); // write imap back to disk
             printf("allocated ino = %d\n", i + 1); // bits count from 0; ino from 1
             return i + 1;
         }
@@ -40,7 +40,6 @@ int ialloc(int dev) // allocate an inode number from inode_bitmap
     return 0;
 }
 
-// WRITE YOUR OWN balloc(dev) function, which returns a FREE disk block number
 int balloc(int dev)
 {
     int i;
@@ -52,7 +51,7 @@ int balloc(int dev)
         printf("could not find mount entry\n");
         exit(1);
     }
-    bmap = mountTable[mnt_index].bmap;
+    bmap = mountTable[mnt_index].bmap; //update bmap and nblocks in case mounted device is not root
     nblocks = mountTable[mnt_index].nblocks;
 
     // read inode_bitmap block
@@ -60,10 +59,10 @@ int balloc(int dev)
 
     for (i = 0; i < nblocks; i++)
     {
-        if (tst_bit(buf, i) == 0)
+        if (tst_bit(buf, i) == 0) //block is free
         {
-            set_bit(buf, i);
-            put_block(dev, bmap, buf);
+            set_bit(buf, i); //set bit to 1 block is now taken
+            put_block(dev, bmap, buf); // write block bit map back to dev
             printf("allocated block = %d\n", i + 1); // bits count from 0; ino from 1
             return i + 1;
         }
@@ -71,9 +70,7 @@ int balloc(int dev)
     return 0;
 }
 
-// Finish iput(MINODE *mip) code in util.c
-
-int kmkdir(MINODE *pmip, char *basename)
+int kmkdir(MINODE *pmip, char *basename) //allocates block and inode for dir. initializes its mip and DIR entries to . and .., puts entry in parent
 {
     int ino, blk;
     MINODE *mip;
@@ -84,7 +81,6 @@ int kmkdir(MINODE *pmip, char *basename)
     printf("makedir: %s, inode = %2d\n", basename, ino);
     blk = balloc(dev);
     {
-        //section 4.2 page 334
         mip = iget(dev, ino);
         INODE *ip = &mip->INODE;
         ip->i_mode = 0x41ED;      // 040755: DIR type and permissions
@@ -105,13 +101,13 @@ int kmkdir(MINODE *pmip, char *basename)
     {
         bzero(buf, BLKSIZE); // optional: clear buf[ ] to 0
         DIR *dp = (DIR *)buf;
-        // make . entry
+        // make . entry (the entry with information about itself)
         dp->inode = ino;
         dp->rec_len = 12;
         dp->name_len = 1;
         dp->name[0] = '.';
-        // make .. entry: pino=parent DIR ino, blk=allocated block
-        dp = (char *)dp + 12;
+        // make .. entry: entry with info about parent
+        dp = (char *)dp + 12; //next DIR entry start point
         dp->inode = pmip->ino;
         dp->rec_len = BLKSIZE - 12; // rec_len spans block
         dp->name_len = 2;
@@ -123,7 +119,7 @@ int kmkdir(MINODE *pmip, char *basename)
     return 0;
 }
 
-int check_path(MINODE **pmip, char *base_name)
+int check_path(MINODE **pmip, char *base_name) // checking if path provided is valid for the operation
 {
     char dirname[128];
     int index;
@@ -178,7 +174,7 @@ int makedir()
     char base_name[64];
     int r = 0;
     MINODE *pmip;
-    r = check_path(&pmip, base_name);
+    r = check_path(&pmip, base_name); // check if mkdir can be done on provided location
     if (r == -1)
     {
         iput(pmip);
@@ -188,7 +184,7 @@ int makedir()
     return 0;
 }
 
-int kcreat(MINODE *pmip, char *basename)
+int kcreat(MINODE *pmip, char *basename)// allocates an inode fo the file and initilizes it, also puts entry in parent
 {
     int ino, blk;
     MINODE *mip;
@@ -197,7 +193,6 @@ int kcreat(MINODE *pmip, char *basename)
 
     ino = ialloc(dev);
     printf("create: %s, inode = %2d\n", basename, ino);
-    //section 4.2 page 334
     mip = iget(dev, ino);
     INODE *ip = &mip->INODE;
     ip->i_mode = 0x81A4;      // 040644: DIR type and permissions
@@ -223,7 +218,7 @@ int create()
     int r;
     char base_name[64];
     MINODE *pmip;
-    r = check_path(&pmip, base_name);
+    r = check_path(&pmip, base_name); // check location provided is valid for creating the file
     if (r == -1)
     {
         iput(pmip);
@@ -234,7 +229,7 @@ int create()
     return 0;
 }
 
-int enter_name(MINODE *pip, int ino, char *name, int i_links)
+int enter_name(MINODE *pip, int ino, char *name, int i_links)// puts entry name in the parent dir
 {
     printf("name: %s\n", name);
     int blk;
@@ -243,7 +238,7 @@ int enter_name(MINODE *pip, int ino, char *name, int i_links)
     char *cp;
     int empty_i_block = 0;
 
-    for (int i = 0; i < 12; i++)
+    for (int i = 0; i < 12; i++) // loop until reaching the 1st empty direct i block
     {
         if (!pip->INODE.i_block[i])
         {
@@ -257,39 +252,39 @@ int enter_name(MINODE *pip, int ino, char *name, int i_links)
         printf("Severe error no . or .. directories\n");
         return 0;
     }
-    blk = pip->INODE.i_block[empty_i_block - 1];
+    blk = pip->INODE.i_block[empty_i_block - 1]; // get last full logical block
     get_block(pip->dev, blk, buf);
     dp = (DIR *)buf;
     cp = buf;
-    while (cp + dp->rec_len < buf + BLKSIZE)
+    while (cp + dp->rec_len < buf + BLKSIZE) // loop until reaching the last entry in the logical block
     {
         cp += dp->rec_len;
         dp = (DIR *)cp;
     }
     int ideal_len = 4 * ((8 + dp->name_len + 3) / 4);
-    int need_length = 4 * ((8 + strlen(name) + 3) / 4);
-    int remain = dp->rec_len - ideal_len;
+    int need_length = 4 * ((8 + strlen(name) + 3) / 4); // calculate amount of length needed to add the new entry
+    int remain = dp->rec_len - ideal_len; // calculate the amount of space left on the block
 
-    if (remain >= need_length)
+    if (remain >= need_length) // there is space for new entry in this block
     {
-        dp->rec_len = ideal_len;
-        cp += dp->rec_len;
+        dp->rec_len = ideal_len; //update the last entries record length
+        cp += dp->rec_len; //go to where next entry will be
         dp = (DIR *)cp;
     }
-    else
+    else // no space for new entry
     {
-        blk = balloc(dev);
+        blk = balloc(dev); // allocate a new block
         pip->INODE.i_block[empty_i_block] = blk;
         memset(buf, 0, BLKSIZE);
         dp = (DIR *)buf;
         remain = BLKSIZE;
     }
-    dp->rec_len = remain;
+    dp->rec_len = remain; //place new entry info in corresponding spot on block
     strncpy(dp->name, name, strlen(name));
     dp->name_len = strlen(name);
     dp->inode = ino;
-    put_block(dev, blk, buf);
-    pip->INODE.i_links_count += i_links;
+    put_block(dev, blk, buf); // write back to device
+    pip->INODE.i_links_count += i_links; // update link count as needed
     iput(pip);
 
     return 0;

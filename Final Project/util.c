@@ -35,7 +35,7 @@ int tokenize(char *pathname)
    printf("\n");
 }
 
-// return minode pointer to loaded INODE
+// return minode pointer to loaded INODE and increases ref count
 MINODE *iget(int dev, int ino)
 {
    int i;
@@ -43,19 +43,19 @@ MINODE *iget(int dev, int ino)
    char buf[BLKSIZE];
    int blk, offset;
    INODE *ip;
-   int mnt_index = search_mnt_dev(dev);
+   int mnt_index = search_mnt_dev(dev); //check in which index of the mount table the device is mounted
 
-   if (mnt_index == -1)
+   if (mnt_index == -1) // device is not mount. error
    {
       printf("could not find mount entry\n");
       exit(1);
    }
-   iblk = mountTable[mnt_index].iblk;
+   iblk = mountTable[mnt_index].iblk; //get the number of the inode starting block of the dev
 
    for (i = 0; i < NMINODE; i++)
    {
       mip = &minode[i];
-      if (mip->refCount && mip->dev == dev && mip->ino == ino)
+      if (mip->refCount && mip->dev == dev && mip->ino == ino) //checking if file is a pre exisiting mip
       {
          mip->refCount++;
          //printf("inode number =  %2d, refcount = %d\n", ino, mip->refCount);
@@ -64,7 +64,7 @@ MINODE *iget(int dev, int ino)
       }
    }
 
-   for (i = 0; i < NMINODE; i++)
+   for (i = 0; i < NMINODE; i++) // allocating new mip
    {
       mip = &minode[i];
       if (mip->refCount == 0)
@@ -92,7 +92,7 @@ MINODE *iget(int dev, int ino)
    return 0;
 }
 
-void iput(MINODE *mip)
+void iput(MINODE *mip)  // write mip back to device if dirty and decrease ref count from iget
 {
    int i, block, offset;
    char buf[BLKSIZE];
@@ -127,7 +127,7 @@ void iput(MINODE *mip)
    put_block(mip->dev, block, buf); // write back to disk
 }
 
-int search(MINODE *mip, char *name)
+int search(MINODE *mip, char *name) // searches for a DIR entry in a given mip
 {
    int i;
    int block = 0;
@@ -138,7 +138,7 @@ int search(MINODE *mip, char *name)
    printf("search for %s in MINODE = [%d, %d]\n", name, mip->dev, mip->ino);
    ip = &(mip->INODE);
 
-   for (int i = 0; i < 12; i++)
+   for (int i = 0; i < 12; i++) //directories could have info in all 12 direct blocks
    {
       block = ip->i_block[i];
       if (!block)
@@ -169,7 +169,7 @@ int search(MINODE *mip, char *name)
    return 0;
 }
 
-int getino(char *pathname)
+int getino(char *pathname) //returns the inode number of mip which corresponds to the pathname
 {
    int i, ino, blk, offset;
    char buf[BLKSIZE];
@@ -177,11 +177,11 @@ int getino(char *pathname)
    MINODE *mip;
 
    printf("getino: pathname=%s\n", pathname);
-   if (strcmp(pathname, "/") == 0)
+   if (strcmp(pathname, "/") == 0) //pathname points to root of dev
       return 2;
 
    // starting mip = root OR CWD
-   if (pathname[0] == '/')
+   if (pathname[0] == '/') //determining whether the starting point is the root or cwd
       mip = root;
    else
       mip = running->cwd;
@@ -208,7 +208,7 @@ int getino(char *pathname)
       }
       iput(mip);
       mip = iget(dev, ino);
-      if ((!strcmp(name[i], "..")) && (ino == 2))
+      if ((!strcmp(name[i], "..")) && (ino == 2)) //upward traversal possible mounting cross point
       {
          int mnt_index = search_mnt_dev(dev);
          if (mnt_index == -1)
@@ -226,7 +226,7 @@ int getino(char *pathname)
          ino = mip->ino;
          mip->refCount++;
       } // release current minode
-      else if (mip->mounted)
+      else if (mip->mounted) //downward traversal mounting cross point
       {
          MOUNT *mnt = mip->mptr;
          dev = mnt->dev;
@@ -241,7 +241,7 @@ int getino(char *pathname)
 }
 
 // These 2 functions are needed for pwd()
-int findmyname(MINODE *parent, u32 myino, char myname[])
+int findmyname(MINODE *parent, u32 myino, char myname[]) //searches for name in parent mip's DIR entries
 {
    char buf[BLKSIZE];
    int block = 0;
@@ -313,7 +313,7 @@ int findino(MINODE *mip, u32 *myino) // myino = i# of . return i# of ..
    return parent_ino;
 }
 
-int count_dir_entries(char *buf)
+int count_dir_entries(char *buf) //returns the amount of Dir entries in buf
 {
    DIR *dp = (DIR *)buf;
    char *cp = buf;

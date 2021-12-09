@@ -12,14 +12,14 @@ int unlink()
     char buf[128];
     strcpy(buf, pathname);
 
-    ino = getino(pathname);
+    ino = getino(pathname); //get inode number of file
     if (!ino)
     {
         printf("file does not exist\n");
         return 0;
     }
     mip = iget(dev, ino);
-    if (!(((mip->INODE.i_mode & EXT2_S_IFMT) == EXT2_S_IFREG) || ((mip->INODE.i_mode & EXT2_S_IFMT) == EXT2_S_IFLNK)))
+    if (!(((mip->INODE.i_mode & EXT2_S_IFMT) == EXT2_S_IFREG) || ((mip->INODE.i_mode & EXT2_S_IFMT) == EXT2_S_IFLNK))) //check if file symlink or normal
     {
         printf("file is not symbolic link or regular and cannot be unlinked\n");
         return 0;
@@ -30,10 +30,10 @@ int unlink()
     printf("child: %s\n", child);
     pino = getino(parent);
     pmip = iget(dev, pino);
-    rm_child(pmip, child);
+    rm_child(pmip, child); // remove file entry from parent inode
     pmip->dirty = 1;
-    iput(pmip);
-    mip->INODE.i_links_count--;
+    iput(pmip); //write parent inode back to dev
+    mip->INODE.i_links_count--; //decrease link count of file inode
     if (mip->INODE.i_links_count > 0)
     {
         mip->dirty = 1; // for write INODE back to disk
@@ -78,7 +78,7 @@ int link()
         return 0;
     }
     omip = iget(dev, oino);
-    if ((omip->INODE.i_mode & EXT2_S_IFMT) == EXT2_S_IFDIR)
+    if ((omip->INODE.i_mode & EXT2_S_IFMT) == EXT2_S_IFDIR) //make sure old file is not a directory
     {
         printf("old file provided is a directory, cannot link\n");
         return 0;

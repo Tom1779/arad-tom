@@ -21,28 +21,28 @@ int mount(char *filesys, char *mount_point)
     int ino;
     MINODE *mip;
     char buf[BLKSIZE];
-    if (!strcmp(filesys, "") || !strcmp(mount_point, ""))
+    if (!strcmp(filesys, "") || !strcmp(mount_point, "")) // invalid input
     {
         print_mounted();
         return 0;
     }
     printf("filesys=%s, mount_point=%s\n", filesys, mount_point);
-    index = search_mnt_point(mount_point);
+    index = search_mnt_point(mount_point);// check if mount point is already mounted
     if (index >= 0)
     {
         printf("a filesystem is already mounted at %s\n", mount_point);
         return 0;
     }
-    index = mnt_alloc();
+    index = mnt_alloc(); // allocate a mount entry in the mount table
     if (index < 0)
     {
         printf("mountTable full\n");
         return 0;
     }
-    int fd = open(filesys, O_RDWR);
-    get_block(fd, 1, buf);
+    int fd = open(filesys, O_RDWR); // cannot use myopen since filesys is outside the boundry of dev
+    get_block(fd, 1, buf); //1st block of filesys contains SUPER struct with filesys type
     SUPER *s_ptr = (SUPER *)buf;
-    if (s_ptr->s_magic != 0xEF53)
+    if (s_ptr->s_magic != 0xEF53) // make sure its ext2
     {
         printf("magic: %d, inodes count: %d, blocks count: %d\n", sp->s_magic, sp->s_inodes_count, sp->s_blocks_count);
         printf("%s is not an ext2 filesystem\n", filesys);
@@ -57,19 +57,19 @@ int mount(char *filesys, char *mount_point)
         return 0;
     }
     mip = iget(dev, ino);
-    if (!((mip->INODE.i_mode & EXT2_S_IFMT) == EXT2_S_IFDIR))
+    if (!((mip->INODE.i_mode & EXT2_S_IFMT) == EXT2_S_IFDIR)) //make sure mounting point is a directory
     {
         printf("mount point is not a directory\n");
         close(fd);
         return 0;
     }
-    if (mip->refCount > 2)
+    if (mip->refCount > 2) // cannot mount on directory when its being used by other processes
     {
         printf("mount point is busy\n");
         close(fd);
         return 0;
     }
-    get_block(fd, 2, buf);
+    get_block(fd, 2, buf); // block 2 contains a GD entry with device info
     GD *g_ptr = (GD *)buf;
 
     mountTable[index].dev = fd;
@@ -82,15 +82,15 @@ int mount(char *filesys, char *mount_point)
     strcpy(mountTable[index].mount_name, mount_point);
 
     mip->mounted = 1;
-    mip->mptr = &mountTable[index];
-    mountTable[index].mounted_inode = mip;
+    mip->mptr = &mountTable[index]; //so we can switch to other device when traversing cross points
+    mountTable[index].mounted_inode = mip; // so we can go back to original inode when traversing cross points
 
     print_mounted();
 
     return 0;
 }
 
-void print_mounted()
+void print_mounted() // print mountable info
 {
     for (int i = 0; i < 8; i++)
     {
@@ -108,7 +108,7 @@ void print_mounted()
     }
 }
 
-int search_mnt_point(char *mount_point)
+int search_mnt_point(char *mount_point) //check if mount point is already mounted
 {
     for (int i = 0; i < 8; i++)
     {
@@ -120,7 +120,7 @@ int search_mnt_point(char *mount_point)
     return -1;
 }
 
-int mnt_alloc()
+int mnt_alloc() // allocate a mounttable entry
 {
     for (int i = 0; i < 8; i++)
     {

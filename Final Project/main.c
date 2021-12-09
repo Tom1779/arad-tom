@@ -41,7 +41,7 @@ int init()
 
   printf("init()\n");
 
-  for (i = 0; i < NMINODE; i++)
+  for (i = 0; i < NMINODE; i++) // initialize exisiting directories/files in disk
   {
     mip = &minode[i];
     mip->dev = mip->ino = 0;
@@ -49,14 +49,14 @@ int init()
     mip->mounted = 0;
     mip->mptr = 0;
   }
-  for (i = 0; i < NPROC; i++)
+  for (i = 0; i < NPROC; i++) // initialize proc 0 and 1
   {
     p = &proc[i];
     p->pid = i;
     p->uid = p->gid = i;
     p->cwd = 0;
 
-    for (int j = 0; j < NFD; j++)
+    for (int j = 0; j < NFD; j++) //stores the existing open file table pointers
     {
       p->fd[j] = 0;
     }
@@ -68,7 +68,7 @@ int init()
   root = 0;
 }
 
-// load root INODE and set root pointer to it
+// load root INODE and set root pointer to it also initialize the 1st index of the mount table with root dev info
 int mount_root()
 {
 
@@ -87,7 +87,7 @@ int mount_root()
   proc[1].cwd = iget(dev, 2);
 }
 
-int access(char *filename) // mode = r|w|x:
+int access(char *filename) // mode = r|w|x: // checks premissions someone has on a file
 {
   int ino;
   MINODE *ip;
@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
   dev = fd; // global dev same as this fd
 
   /********** read super block  ****************/
-  get_block(dev, 1, buf);
+  get_block(dev, 1, buf); // block 1 on the dev contains SUPER struct
   sp = (SUPER *)buf;
 
   /* verify it's an ext2 file system ***********/
@@ -154,10 +154,9 @@ int main(int argc, char *argv[])
   printf("creating P0 as running process\n");
   running = &proc[0];
   running->status = READY;
-  // running->cwd = iget(dev, 2); proc 0 is initialized in mount_root()
   printf("root refCount = %d\n", root->refCount);
 
-  // WRTIE code here to create P1 as a USER process
+  // loop for getting commands from user under the proc
   while (1)
   {
     printf("input command : [ls|cd|pwd|mkdir|creat|rmdir|link|unlink|symlink|cat|cp|mount|umount|quit] ");

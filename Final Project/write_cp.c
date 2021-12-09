@@ -10,27 +10,27 @@ int mywrite(int fd, char buf[], int nbytes)
     int *wbuf_int;
     MINODE *mip = proc->fd[fd]->minodePtr;
     int offset = proc->fd[fd]->offset;
-    while (nbytes)
+    while (nbytes) //still have more to write
     {
-        lblk = offset / BLKSIZE;
-        startbyte = offset % BLKSIZE;
-        blk = get_blk_num(mip, lblk);
+        lblk = offset / BLKSIZE; // get starting block
+        startbyte = offset % BLKSIZE; // get starting byte in the block
+        blk = get_blk_num(mip, lblk); //get a block number from dev, allocate one if doesnt exist
         get_block(mip->dev, blk, wbuf);
-        remain = BLKSIZE - startbyte;
-        int min = (remain < nbytes) ? remain : nbytes;
-        memcpy(wbuf + startbyte, buf + buf_offset, min);
+        remain = BLKSIZE - startbyte; //bytes left in block
+        int min = (remain < nbytes) ? remain : nbytes; //optimization
+        memcpy(wbuf + startbyte, buf + buf_offset, min); //copy amount needed from wbuf to the block
         nbytes -= min;
         offset += min;
         buf_offset += min;
-        if (offset > mip->INODE.i_size)
+        if (offset > mip->INODE.i_size) //update file size if needed
         {
             mip->INODE.i_size = offset;
         }
-        put_block(mip->dev, blk, wbuf);
-        proc->fd[fd]->offset = offset;
+        put_block(mip->dev, blk, wbuf); // write block back to dev
+        proc->fd[fd]->offset = offset; // update file offset
     }
     mip->dirty = 1;
-    iput(mip);
+    iput(mip); //write mip back to dev
     return nbytes;
 }
 
@@ -118,13 +118,13 @@ int cp(char *src, char *dest)
 {
     char buf[32768];
     strcpy(pathname, src);
-    int fd = myopen(src, 0);
+    int fd = myopen(src, 0); //opens src and dest for reading and writing
     strcpy(pathname, dest);
     int gd = myopen(dest, 2);
-    while (n = myread(fd, buf, BLKSIZE))
+    while (n = myread(fd, buf, BLKSIZE)) // keep going while you are still able to read any bytes
     {
         mywrite(gd, buf, n); // notice the n in write()
     }
-    myclose(fd);
+    myclose(fd); // close src and dest
     myclose(gd);
 }
